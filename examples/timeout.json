@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "name": "Orders timeout",
+  "upstream": "http://127.0.0.1:7333",
+  "enabled": true,
+  "rules": [
+    {
+      "name": "Wait five seconds, then return 504",
+      "enabled": true,
+      "method": "GET",
+      "path": "/api/orders",
+      "type": "timeout",
+      "delayMs": 5000,
+      "every": 1,
+      "limit": 0
+    }
+  ]
+}

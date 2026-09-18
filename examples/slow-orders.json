@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "name": "Slow orders",
+  "upstream": "http://127.0.0.1:7333",
+  "enabled": true,
+  "rules": [
+    {
+      "name": "Orders take 1.5 seconds longer",
+      "enabled": true,
+      "method": "GET",
+      "path": "/api/orders",
+      "type": "latency",
+      "delayMs": 1500,
+      "every": 1,
+      "limit": 0
+    }
+  ]
+}

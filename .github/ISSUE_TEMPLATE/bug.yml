@@ -1,0 +1,24 @@
+name: Bug report
+description: Report a reproducible problem in FaultDeck.
+body:
+  - type: input
+    id: version
+    attributes:
+      label: FaultDeck version and operating system
+      placeholder: v0.1.0, Windows 11 / macOS / Linux
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Prefer the built-in demo API or a minimal local server. Remove credentials and private URLs.
+      placeholder: Start FaultDeck, import this scenario, send these requests...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true

@@ -1,0 +1,9 @@
+/dist/
+/tmp/
+*.exe
+*.test
+coverage.out
+.DS_Store
+.env
+.env.*
+!.env.example

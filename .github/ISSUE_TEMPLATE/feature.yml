@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest an improvement to a concrete development workflow.
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to test?
+      description: Describe the application behavior or failure you want to reproduce.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Suggested behavior
+      description: A small scenario or example helps.

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "name": "Intermittent rate limit",
+  "upstream": "http://127.0.0.1:7333",
+  "enabled": true,
+  "rules": [
+    {
+      "name": "Every third API request gets 429",
+      "enabled": true,
+      "method": "*",
+      "path": "/api/*",
+      "type": "status",
+      "statusCode": 429,
+      "every": 3,
+      "limit": 0
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "name": "Fail twice, then recover",
+  "upstream": "http://127.0.0.1:7333",
+  "enabled": true,
+  "rules": [
+    {
+      "name": "Orders recover after two failures",
+      "enabled": true,
+      "method": "GET",
+      "path": "/api/orders",
+      "type": "status",
+      "statusCode": 503,
+      "every": 1,
+      "limit": 2
+    }
+  ]
+}

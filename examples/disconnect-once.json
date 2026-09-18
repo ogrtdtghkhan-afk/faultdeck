@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "name": "Disconnect once",
+  "upstream": "http://127.0.0.1:7333",
+  "enabled": true,
+  "rules": [
+    {
+      "name": "Drop the first orders connection",
+      "enabled": true,
+      "method": "GET",
+      "path": "/api/orders",
+      "type": "disconnect",
+      "every": 1,
+      "limit": 1
+    }
+  ]
+}

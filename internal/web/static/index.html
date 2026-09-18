@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111314">
+  <title>FaultDeck — Your local failure lab</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fa7d48'/%3E%3Cpath d='M10 8h14l-3 5h-6v4h6l-3 5h-3v4h-5z' fill='%23111314'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="FaultDeck home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M9 7h16l-3 6h-7v4h7l-3 5h-4v5H9z"/></svg></span><span>FaultDeck<span class="version" id="version">v0.1.0</span></span></a>
+      <nav class="header-actions" aria-label="Workspace actions">
+        <span class="local-badge"><span class="status-dot" id="connection-dot"></span><span id="connection-label">Connecting</span></span>
+        <span class="header-divider"></span>
+        <button class="button button-quiet button-small" id="import-button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 13V3m-4 4 4-4 4 4M3 12v5h14v-5"/></svg>Import</button>
+        <button class="button button-quiet button-small" id="export-button"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v10m-4-4 4 4 4-4M3 12v5h14v-5"/></svg>Export scenario</button>
+        <input id="import-file" type="file" accept="application/json,.json" hidden>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div><div class="eyebrow"><span class="tiny-cross">+</span> YOUR LOCAL FAILURE LAB</div><h1 id="page-title">Break it here.<br class="mobile-break"> <span>Ship it stronger.</span></h1><p>Put your APIs under pressure. See how your app holds up.</p></div>
+        <div class="master-control"><div><span class="control-label">FAULT INJECTION</span><div class="master-status" id="master-status">Connecting…</div></div><button id="master-toggle" class="toggle toggle-large" role="switch" aria-checked="false" aria-label="Enable fault injection" disabled><span></span></button></div>
+      </section>
+
+      <section class="connection-panel panel" aria-label="Proxy configuration">
+        <form id="upstream-form" class="upstream-form"><label class="label" for="upstream">UPSTREAM TARGET <span class="subtle" id="upstream-kind">YOUR BACKEND</span></label><div class="input-action"><span class="input-prefix" aria-hidden="true">↗</span><input id="upstream" name="upstream" type="url" required spellcheck="false" placeholder="http://localhost:8000" aria-describedby="target-note"><button type="submit" class="button button-outline button-small" id="save-target">Connect</button></div><span class="field-note" id="target-note">Requests are forwarded to this address.</span></form>
+        <div class="connection-flow" aria-hidden="true"><span></span><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg><span></span></div>
+        <div class="proxy-info"><span class="label">YOUR PROXY <span class="subtle">USE THIS IN YOUR APP</span></span><div class="proxy-address"><span class="proxy-dot"></span><code id="proxy-url">http://127.0.0.1:7332</code><button class="icon-button" id="copy-proxy" aria-label="Copy proxy address" title="Copy proxy address"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M13 7V3H3v10h4"/></svg></button></div><span class="field-note">Same requests. A little more chaos.</span></div>
+      </section>
+
+      <section class="metrics" aria-label="Session metrics">
+        <div class="metric"><span class="metric-label">TOTAL REQUESTS</span><div><span class="metric-value" id="stat-requests">0</span><span class="metric-detail">this session</span></div><svg viewBox="0 0 60 20" aria-hidden="true"><path d="M1 16h9l3-7 5 7h8l3-12 5 12h11l3-5 4 5h7"/></svg></div>
+        <div class="metric"><span class="metric-label">FAULTS INJECTED</span><div><span class="metric-value orange" id="stat-injected">0</span><span class="metric-detail" id="injected-percent">0% of requests</span></div><span class="metric-decoration orange" aria-hidden="true">ϟ</span></div>
+        <div class="metric"><span class="metric-label">FAILED REQUESTS</span><div><span class="metric-value" id="stat-errors">0</span><span class="metric-detail">errors + failures</span></div><span class="metric-decoration" aria-hidden="true">↗</span></div>
+        <div class="metric"><span class="metric-label">AVG. DURATION</span><div><span class="metric-value" id="stat-duration">0<span class="metric-unit">ms</span></span><span class="metric-detail">end to end</span></div><span class="metric-decoration clock-icon" aria-hidden="true">◷</span></div>
+      </section>
+
+      <div class="workspace-grid">
+        <section class="rules-panel panel" aria-labelledby="rules-title">
+          <div class="section-heading"><div class="heading-group"><h2 id="rules-title">Fault rules</h2><span class="count-badge" id="rule-count">0</span></div><button class="button button-primary button-small" id="add-rule"><span class="plus" aria-hidden="true">+</span> Create rule</button></div>
+          <div class="presets"><div class="preset-heading"><span class="label">START WITH A DEMO PRESET</span><span class="muted">GET /api/orders</span></div><div class="preset-buttons"><button class="preset-button" data-preset="slow"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="11" r="6"/><path d="M10 8v3l2 1M8 2h4"/></svg>Slow response<span>1.5s</span></button><button class="preset-button" data-preset="rate"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 3h10v14H5zM5 8h10M8 11h4m-4 3h2"/></svg>Rate limited<span>429</span></button><button class="preset-button" data-preset="twice"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M16 6v4h-4M4 14v-4h4M16 10a6 6 0 0 0-11-3m-1 3a6 6 0 0 0 11 3"/></svg>Fail twice<span>503</span></button><button class="preset-button" data-preset="disconnect"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m3 3 14 14M6 6l-3 3 3 3 3-3m2 2 3 3 3-3-3-3M4 11l-2 2m14-6 2-2"/></svg>Disconnect</button></div></div>
+          <div id="rules-list" class="rules-list" aria-live="polite"></div>
+          <div class="rules-footnote"><span class="hint-icon" aria-hidden="true">i</span>Rules run top to bottom. The first eligible match wins.</div>
+        </section>
+
+        <section class="playground-panel panel" aria-labelledby="playground-title">
+          <div class="section-heading"><div class="heading-group"><h2 id="playground-title">Request playground</h2></div><span class="small-tag">LIVE</span></div>
+          <div class="playground-content"><p class="section-description">Send a real request through your proxy.</p><form id="play-form"><div class="request-input"><select id="play-method" aria-label="Request method"><option>GET</option><option>HEAD</option></select><input id="play-path" aria-label="Request path" value="/api/orders" required spellcheck="false" pattern="/.*"></div><button class="button button-primary send-button" type="submit" id="send-request"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 3 12 7-12 7V3z"/></svg><span>Send request</span><kbd>↵</kbd></button></form><p class="play-target-note">To <code id="play-target">the configured upstream</code><button class="text-button" id="use-demo">Use demo</button></p><div class="response-box"><div class="response-heading"><span class="label">RESPONSE</span><div id="response-meta" class="response-meta"><span class="muted">Waiting for a request</span></div></div><pre id="response-body" tabindex="0"><span class="response-placeholder">// Your response will appear here.
+// Try a preset, then send a request.</span></pre></div><div class="playground-note"><span class="hint-icon" aria-hidden="true">i</span>GET and HEAD only. Requests time out after 10s.</div></div>
+        </section>
+      </div>
+
+      <section class="activity-panel panel" aria-labelledby="activity-title">
+        <div class="section-heading"><div class="heading-group"><h2 id="activity-title">Request activity</h2><span class="activity-live"><span class="status-dot"></span>LIVE</span></div><div class="activity-actions"><div class="segmented" role="group" aria-label="Filter request activity"><button class="selected" data-log-filter="all" aria-pressed="true">All requests</button><button data-log-filter="faults" aria-pressed="false">Injected</button></div><button class="icon-button" id="clear-logs" title="Clear activity" aria-label="Clear request activity"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M8 3h4l1 3H7l1-3zM5 6l1 11h8l1-11M8 9v5m4-5v5"/></svg></button></div></div>
+        <div class="activity-table-wrap"><table class="activity-table"><thead><tr><th>TIME</th><th>REQUEST</th><th>STATUS</th><th>DURATION</th><th>FAULT APPLIED</th></tr></thead><tbody id="activity-rows"></tbody></table><div id="activity-empty" class="activity-empty"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg><div><strong>Listening for requests</strong><span>Send a request from the playground or point your app at the proxy.</span></div></div></div>
+        <div class="activity-footer"><span id="activity-summary">No requests yet</span><button class="text-button" id="reset-session">Reset session <span aria-hidden="true">↺</span></button></div>
+      </section>
+      <footer class="page-footer"><span><span class="footer-mark" aria-hidden="true">ϟ</span> Small failures. Stronger software.</span><span>Runs locally · Metadata only · No account needed</span></footer>
+    </main>
+  </div>
+
+  <dialog id="rule-dialog" class="dialog rule-dialog" aria-labelledby="rule-dialog-title"><form id="rule-form"><div class="dialog-heading"><div><span class="eyebrow">DESIGN A FAILURE</span><h2 id="rule-dialog-title">Create fault rule</h2></div><button class="icon-button" type="button" data-close-rule aria-label="Close rule dialog">×</button></div><div class="dialog-content"><label class="form-field">Rule name<input id="rule-name" maxlength="80" required placeholder="e.g. Slow order service" autocomplete="off"></label><div class="form-grid path-fields"><label class="form-field">Method<select id="rule-method"><option value="*">Any method</option><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option><option>HEAD</option><option>OPTIONS</option></select></label><label class="form-field">Path<input id="rule-path" value="/api/*" required spellcheck="false" placeholder="/api/orders"></label></div><p class="form-help">Exact path, <code>/api/*</code> for a prefix, or <code>*</code> for every path.</p><label class="form-field">Fault type<select id="rule-type"><option value="latency">Latency — delay, then forward</option><option value="status">HTTP error — return an error status</option><option value="timeout">Timeout — wait, then return 504</option><option value="disconnect">Disconnect — close the connection</option></select></label><div class="form-grid"><label class="form-field" id="delay-field">Delay (milliseconds)<input id="rule-delay" type="number" value="1500" min="0" max="60000" step="1"></label><label class="form-field" id="status-field" hidden>HTTP status code<input id="rule-status" type="number" value="503" min="400" max="599" step="1"></label></div><div class="form-section-label">WHEN TO INJECT</div><div class="form-grid"><label class="form-field">Every Nth matching request<input id="rule-every" type="number" value="1" min="1" max="100000" step="1" required></label><label class="form-field">Stop after N injections<input id="rule-limit" type="number" value="0" min="0" max="100000" step="1" required></label></div><p class="form-help">Set the limit to 0 to keep injecting. Saving resets this rule’s counters.</p><label class="checkbox-field"><input type="checkbox" id="rule-enabled" checked>Enable this rule</label><p id="rule-error" class="form-error" role="alert" hidden></p></div><div class="dialog-footer"><button class="button button-outline" type="button" data-close-rule>Cancel</button><button class="button button-primary" type="submit" id="save-rule">Create rule</button></div></form></dialog>
+  <dialog id="confirm-dialog" class="dialog confirm-dialog" aria-labelledby="confirm-title"><div class="dialog-heading"><h2 id="confirm-title">Replace scenario?</h2></div><p id="confirm-message" class="confirm-message"></p><div class="dialog-footer"><button class="button button-outline" id="confirm-cancel">Cancel</button><button class="button button-primary" id="confirm-accept">Continue</button></div></dialog>
+  <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="false"></div>
+</body>
+</html>
