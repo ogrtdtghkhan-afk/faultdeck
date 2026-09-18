@@ -145,6 +145,37 @@ def main():
                 require(proxy(access_token=password)[0] == 401, "Separate proxy token did not isolate admin password")
                 passed("Admin Basic Auth and proxy token reject unauthenticated access")
 
+                # Persist the default demo before recreating, so loading a saved
+                # target also exercises the distinction between advertised and
+                # actual listener ports. Host mappings remain random and unchanged.
+                admin("PUT", "/api/config", {"enabled": True})
+                saved_command = list(config["services"]["faultdeck"]["command"])
+                overlap_command = list(saved_command)
+                overlap_origin = "http://127.0.0.1:7333"
+                for flag in ("--proxy-url", "--ui-origin"):
+                    overlap_command[overlap_command.index(flag) + 1] = overlap_origin
+                config["services"]["faultdeck"]["command"] = overlap_command
+                compose_file.write_text(json.dumps(config), encoding="utf-8")
+                command(compose + ["up", "-d", "--no-deps", "--force-recreate", "--wait", "--wait-timeout", "120", "faultdeck"], env=env)
+                # Connect to the mapped port while presenting the configured public
+                # Host/Origin, as a reverse proxy would. Authentication stays enabled.
+                admin_headers.update({"Host": "127.0.0.1:7333", "Origin": overlap_origin})
+                overlap_state = admin("GET", "/api/state")
+                require(overlap_state["upstream"] == "http://127.0.0.1:7333", "Advertised port overlap changed the saved demo upstream")
+                require(overlap_state["proxyUrl"] == overlap_origin, "Advertised proxy URL was not applied")
+                played = admin("POST", "/api/play", {"method": "GET", "path": "/api/health"})
+                require(played["status"] == 200 and not played.get("error"), "Playground failed with overlapping advertised ports")
+                require(json.loads(played["body"])["service"] == "faultdeck-demo", "Playground did not reach the internal demo")
+                after_play = admin("GET", "/api/state")
+                require(after_play["stats"]["requests"] == overlap_state["stats"]["requests"] + 1,
+                        "Playground bypassed the internal proxy when advertised ports overlapped")
+                config["services"]["faultdeck"]["command"] = saved_command
+                admin_headers.pop("Host")
+                admin_headers.pop("Origin")
+                compose_file.write_text(json.dumps(config), encoding="utf-8")
+                command(compose + ["up", "-d", "--no-deps", "--force-recreate", "--wait", "--wait-timeout", "120", "faultdeck"], env=env)
+                passed("Advertised port overlap preserves saved demo and internal playground proxy routing")
+
                 upstream = "http://upstream:8080"
                 admin("PUT", "/api/config", {"upstream": upstream, "enabled": True})
                 state = admin("GET", "/api/state")

@@ -4,7 +4,7 @@ These examples connect an application to the proxy on port **7332**. The control
 
 ## Node.js: automatically fail twice, then recover
 
-The [retry client](https://github.com/ogrtdtghkhan-afk/faultdeck/blob/main/examples/clients/retry.mjs) requires Node.js 22 or later and has no package dependencies. It is included in the v0.2.0 release archives and the source checkout.
+The [retry client](https://github.com/ogrtdtghkhan-afk/faultdeck/blob/main/examples/clients/retry.mjs) requires Node.js 22 or later and has no package dependencies. It is included in the v0.2.1 release archives and the source checkout.
 
 ### Recommended: run from the main checkout
 
@@ -36,11 +36,11 @@ Success after 3 attempts.
 
 Open `http://127.0.0.1:7331` to see the three requests. Each run uses the scenario's shared counters: playground requests and other clients can consume its two injected failures first. For the same sequence again, restart FaultDeck with the scenario or deliberately use **Reset** in the control panel. The example never imports scenarios, changes rules, or calls the control API.
 
-### Alternative: use the v0.2.0 binary
+### Alternative: use the v0.2.1 binary
 
 This option needs Node.js but does not need Go.
 
-Extract the v0.2.0 archive and enter its `faultdeck_<version>_<os>_<arch>` directory. It contains the executable, `examples/fail-twice.json`, and `examples/clients/retry.mjs`.
+Extract the v0.2.1 archive and enter its `faultdeck_<version>_<os>_<arch>` directory. It contains the executable, `examples/fail-twice.json`, and `examples/clients/retry.mjs`.
 
 In terminal one, from the extracted directory:
 
@@ -144,7 +144,7 @@ Keep this routing in the **development server only**. Do not point a production 
 
 ## 中文速览
 
-**v0.2.0 压缩包已经包含客户端和场景。** 解压后进入可执行文件所在目录，运行 `./faultdeck --scenario examples/fail-twice.json`（Windows 使用 `.\faultdeck.exe`），再打开第二个终端运行 `node examples/clients/retry.mjs`。也可以克隆源码，用 `go run ./cmd/faultdeck --scenario examples/fail-twice.json` 启动。旧版 v0.1.0 不含客户端，建议升级。
+**v0.2.1 压缩包已经包含客户端和场景。** 解压后进入可执行文件所在目录，运行 `./faultdeck --scenario examples/fail-twice.json`（Windows 使用 `.\faultdeck.exe`），再打开第二个终端运行 `node examples/clients/retry.mjs`。也可以克隆源码，用 `go run ./cmd/faultdeck --scenario examples/fail-twice.json` 启动。旧版 v0.1.0 不含客户端，建议升级。
 
 客户端会自动请求三次，得到 **503、503、200**。它只重试 429/503，最多三次，不会修改任何故障规则。重新演示前重启场景或在控制台手动 Reset，避免旧计数影响结果。
 

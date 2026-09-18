@@ -149,7 +149,7 @@
     state = next;
     const rules = state.rules || [];
     const logs = state.logs || [];
-    elements["version"].textContent = `v${state.version || "0.2.0"}`;
+    elements["version"].textContent = `v${state.version || "0.2.1"}`;
     elements["master-toggle"].setAttribute(
       "aria-checked",
       String(Boolean(state.enabled)),

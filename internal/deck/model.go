@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 )
 
-const Version = "0.2.0"
+const Version = "0.2.1"
 
 type Config struct {
 	Version          string
@@ -135,7 +135,17 @@ func (d *Deck) validateTarget(raw string) (*url.URL, error) {
 	host := strings.ToLower(strings.TrimSuffix(u.Hostname(), "."))
 	ip := net.ParseIP(host)
 	if host == "localhost" || (ip != nil && ip.IsLoopback()) {
-		for _, own := range []string{d.config.ProxyURL, d.config.AdminURL, d.config.InternalProxyURL, d.config.InternalAdminURL} {
+		// Published origins may use host ports or TLS ports that are unrelated
+		// to this process's listeners. Prefer each actual internal listener;
+		// retain compatibility with Config callers that omit the internal URLs.
+		proxyURL, adminURL := d.config.InternalProxyURL, d.config.InternalAdminURL
+		if proxyURL == "" {
+			proxyURL = d.config.ProxyURL
+		}
+		if adminURL == "" {
+			adminURL = d.config.AdminURL
+		}
+		for _, own := range []string{proxyURL, adminURL} {
 			v, _ := url.Parse(own)
 			if v != nil && effectivePort(u) == effectivePort(v) {
 				return nil, fmt.Errorf("target cannot point to FaultDeck's proxy or control port")

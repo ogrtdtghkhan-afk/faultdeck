@@ -13,7 +13,7 @@ Configuration and rule changes are persisted when `--data-dir` is nonempty (defa
 `GET /api/state` returns:
 
 ```json
-{"version":"0.2.0","proxyUrl":"http://127.0.0.1:7332","demoUrl":"http://127.0.0.1:7333","upstream":"http://127.0.0.1:7333","enabled":true,"persistent":true,"proxyAuth":false,"startedAt":"2026-09-18T00:00:00Z","rules":[],"stats":{"requests":0,"injected":0,"errors":0,"avgDurationMs":0},"logs":[]}
+{"version":"0.2.1","proxyUrl":"http://127.0.0.1:7332","demoUrl":"http://127.0.0.1:7333","upstream":"http://127.0.0.1:7333","enabled":true,"persistent":true,"proxyAuth":false,"startedAt":"2026-09-18T00:00:00Z","rules":[],"stats":{"requests":0,"injected":0,"errors":0,"avgDurationMs":0},"logs":[]}
 ```
 
 Poll state every 1200ms, preserving current editing state. Logs are newest first, bounded to 200. A log contains `id, time, method, path, status, durationMs, ruleId, ruleName, fault, error`. Status 0 means connection closed without HTTP response. Logs contain metadata only, never bodies, headers, or query strings. UI must render all dynamic data with textContent / safe DOM methods.
