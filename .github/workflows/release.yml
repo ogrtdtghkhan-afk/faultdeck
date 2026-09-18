@@ -73,13 +73,33 @@ jobs:
           TAG_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          prerelease=()
+          prerelease=false
           if [[ "$TAG_NAME" == *-* ]]; then
-            prerelease+=(--prerelease)
+            prerelease=true
           fi
-          gh release create "$TAG_NAME" \
-            --verify-tag \
-            --title "FaultDeck $TAG_NAME" \
-            --generate-notes \
-            "${prerelease[@]}" \
-            dist/*.tar.gz dist/*.zip dist/checksums.txt
+          assets=(dist/*.tar.gz dist/*.zip dist/checksums.txt)
+          if is_draft="$(gh release view "$TAG_NAME" --json isDraft --jq .isDraft)"; then
+            if [ "$is_draft" = false ]; then
+              # A completed rerun must preserve published (possibly immutable) assets.
+              published_assets="$(gh release view "$TAG_NAME" --json assets --jq '.assets[].name')"
+              for asset in "${assets[@]}"; do
+                if ! grep -Fxq -- "${asset##*/}" <<< "$published_assets"; then
+                  echo "Published release $TAG_NAME is missing ${asset##*/}."
+                  echo "Recover it manually or publish a new version; existing assets were not changed."
+                  exit 1
+                fi
+              done
+              echo "$TAG_NAME is already published with all expected assets."
+              exit 0
+            fi
+          else
+            gh release create "$TAG_NAME" \
+              --draft \
+              --verify-tag \
+              --title "FaultDeck $TAG_NAME" \
+              --generate-notes \
+              --prerelease="$prerelease"
+          fi
+          # Failed uploads leave a draft that the next run can resume.
+          gh release upload "$TAG_NAME" "${assets[@]}" --clobber
+          gh release edit "$TAG_NAME" --draft=false --prerelease="$prerelease"

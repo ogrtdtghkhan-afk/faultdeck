@@ -22,7 +22,7 @@ Your app ──► localhost:7332 ──► Your backend
 
 ## Try it in three minutes
 
-Download and extract the archive for your platform from [Releases](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest), then run:
+Download and extract the archive for your platform from [Releases](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest). Open a terminal inside the extracted `faultdeck_<version>_<os>_<arch>` folder (the folder containing the executable), then run:
 
 ```sh
 # macOS / Linux

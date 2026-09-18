@@ -22,7 +22,7 @@
 
 ## 三分钟上手
 
-从 [Releases](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) 下载适合你的系统和架构的压缩包，解压运行：
+从 [Releases](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) 下载适合你的系统和架构的压缩包并解压。在解压得到的 `faultdeck_<版本>_<系统>_<架构>` 文件夹中打开终端（确认当前文件夹包含可执行文件），然后运行：
 
 ```powershell
 # Windows PowerShell
