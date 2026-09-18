@@ -1,0 +1,40 @@
+name: Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - .dockerignore
+      - compose.yaml
+      - .env.example
+      - go.mod
+      - 'cmd/**'
+      - 'internal/**'
+      - 'scripts/deployment-*'
+      - .github/workflows/deployment.yml
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  container-e2e:
+    name: Real Docker deployment and persistence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build, deploy and exercise the real containers
+        run: python3 scripts/deployment-smoke.py --report "$RUNNER_TEMP/deployment-report.json"
+      - name: Retain deployment acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: deployment-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/deployment-report.json
+          if-no-files-found: warn

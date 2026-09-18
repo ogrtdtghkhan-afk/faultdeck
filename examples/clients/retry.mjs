@@ -58,6 +58,7 @@ export function retryDelayMs(retryAfter, now = Date.now()) {
 
 export async function runRetryDemo({
   target = DEFAULT_TARGET,
+  proxyToken = "",
   log = console.log,
   wait = sleep,
   timeoutMs = 3000,
@@ -65,14 +66,21 @@ export async function runRetryDemo({
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 60000) {
     throw new Error("timeoutMs must be an integer between 1 and 60000");
   }
+  if (typeof proxyToken !== "string" || /[\r\n]/.test(proxyToken)) {
+    throw new Error("proxyToken must be a string without newlines");
+  }
   const url = new URL("/api/orders", parseTarget(target));
+  const headers = { Accept: "application/json" };
+  // Proxy authentication has its own header; never use Authorization, which
+  // belongs to the upstream application. Do not include credentials in logs.
+  if (proxyToken) headers["X-FaultDeck-Token"] = proxyToken;
   log(`GET ${url.href}`);
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     let response;
     try {
       response = await fetch(url, {
         method: "GET",
-        headers: { Accept: "application/json" },
+        headers,
         redirect: "manual",
         signal: AbortSignal.timeout(timeoutMs),
       });
@@ -133,8 +141,14 @@ if (
       console.log(
         "GET /api/orders, at most 3 attempts; retries only 429/503. No control API calls.",
       );
+      console.log(
+        "Optional environment variable: FAULTDECK_PROXY_TOKEN (X-FaultDeck-Token header).",
+      );
     } else {
-      await runRetryDemo({ target: cliTarget(process.argv.slice(2)) });
+      await runRetryDemo({
+        target: cliTarget(process.argv.slice(2)),
+        proxyToken: process.env.FAULTDECK_PROXY_TOKEN ?? "",
+      });
     }
   } catch (error) {
     console.error(`Retry demo: ${error.message}`);

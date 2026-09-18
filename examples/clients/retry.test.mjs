@@ -26,6 +26,7 @@ test("automatically retries 503, 503, 200 and reports all attempts", async (t) =
   const target = await mockAPI(t, (req, res) => {
     assert.equal(req.method, "GET");
     assert.equal(req.url, "/api/orders");
+    assert.equal(req.headers["x-faultdeck-token"], undefined);
     res.writeHead(statuses[calls++]);
     res.end();
   });
@@ -75,7 +76,10 @@ test("CLI exhaustion stops after three requests and exits nonzero", async (t) =>
       "--target",
       target,
     ],
-    { windowsHide: true },
+    {
+      windowsHide: true,
+      env: { ...process.env, FAULTDECK_PROXY_TOKEN: "" },
+    },
   );
   let stdout = "";
   let stderr = "";
@@ -90,6 +94,86 @@ test("CLI exhaustion stops after three requests and exits nonzero", async (t) =>
   assert.equal(calls, 3);
   assert.match(stdout, /Attempt 3\/3 -> HTTP 503/);
   assert.match(stderr, /Retries exhausted after 3 attempts/);
+});
+
+test("CLI reads the proxy token from its environment on every retry without logging it", async (t) => {
+  const token = "test-only-proxy-token-123";
+  let calls = 0;
+  const target = await mockAPI(t, (req, res) => {
+    assert.equal(req.url, "/api/orders");
+    assert.equal(req.headers.authorization, undefined);
+    if (req.headers["x-faultdeck-token"] !== token) {
+      res.writeHead(401);
+      res.end();
+      return;
+    }
+    calls++;
+    res.writeHead(calls < 3 ? 503 : 200, { "Retry-After": "0" });
+    res.end();
+  });
+  const child = spawn(
+    process.execPath,
+    [fileURLToPath(new URL("./retry.mjs", import.meta.url)), "--target", target],
+    {
+      windowsHide: true,
+      env: { ...process.env, FAULTDECK_PROXY_TOKEN: token },
+    },
+  );
+  let output = "";
+  child.stdout.on("data", (chunk) => {
+    output += chunk;
+  });
+  child.stderr.on("data", (chunk) => {
+    output += chunk;
+  });
+  const [code] = await once(child, "close");
+  assert.equal(code, 0);
+  assert.equal(calls, 3);
+  assert.match(output, /Success after 3 attempts/);
+  assert.equal(output.includes(token), false);
+});
+
+test("missing or incorrect proxy tokens stop on 401 without retrying", async (t) => {
+  const expected = "test-only-expected-proxy-token";
+  for (const proxyToken of ["", "test-only-incorrect-proxy-token"]) {
+    let calls = 0;
+    const target = await mockAPI(t, (req, res) => {
+      calls++;
+      assert.equal(req.url, "/api/orders");
+      assert.equal(req.headers.authorization, undefined);
+      res.writeHead(req.headers["x-faultdeck-token"] === expected ? 200 : 401);
+      res.end();
+    });
+    const lines = [];
+    await assert.rejects(
+      runRetryDemo({
+        target,
+        proxyToken,
+        log: (line) => lines.push(line),
+        wait: async () => assert.fail("401 must not be retried"),
+      }),
+      /HTTP 401 is not retryable/,
+    );
+    assert.equal(calls, 1);
+    if (proxyToken) assert.equal(lines.join("\n").includes(proxyToken), false);
+  }
+});
+
+test("invalid proxy header values fail before any request or log disclosure", async () => {
+  const token = "test-only-secret\r\nInjected: yes";
+  const lines = [];
+  await assert.rejects(
+    runRetryDemo({
+      proxyToken: token,
+      log: (line) => lines.push(line),
+    }),
+    (error) => {
+      assert.match(error.message, /proxyToken must be a string without newlines/);
+      assert.equal(error.message.includes(token), false);
+      return true;
+    },
+  );
+  assert.deepEqual(lines, []);
 });
 
 test("non-transient errors and redirects do not cause another request", async (t) => {

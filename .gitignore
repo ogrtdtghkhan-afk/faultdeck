@@ -1,6 +1,7 @@
 /dist/
 /tmp/
 /planning/
+/data/
 *.exe
 *.test
 coverage.out

@@ -17,6 +17,8 @@
   let targetDirty = false;
   let confirmResolve = null;
   let playing = false;
+  let exampleLanguage = "curl";
+  let lastExample = "";
 
   const icons = {
     latency: '<circle cx="10" cy="11" r="6"/><path d="M10 8v3l2 1M8 2h4"/>',
@@ -81,7 +83,7 @@
   function setConnection(connected) {
     elements["connection-dot"].classList.toggle("offline", !connected);
     elements["connection-label"].textContent = connected
-      ? "Local workspace"
+      ? "Instance connected"
       : "Reconnecting…";
     elements["master-toggle"].disabled = !connected;
   }
@@ -108,11 +110,46 @@
     }
   }
 
+  function shellQuote(value) {
+    return "'" + String(value).replace(/'/g, "'\\''") + "'";
+  }
+
+  function renderIntegrationExample() {
+    if (!state) return;
+    const inputPath = elements["integration-path"].value.trim() || "/your-endpoint";
+    const requestPath = inputPath.startsWith("/") ? inputPath : "/" + inputPath;
+    const url = String(state.proxyUrl).replace(/\/+$/, "") + requestPath;
+    let example;
+    if (exampleLanguage === "node") {
+      const authSetup = state.proxyAuth
+        ? 'const token = process.env.FAULTDECK_PROXY_TOKEN;\nif (!token) throw new Error("Set FAULTDECK_PROXY_TOKEN from deployment config");\n\n'
+        : "";
+      const options = state.proxyAuth
+        ? ', {\n  headers: { "X-FaultDeck-Token": token },\n}'
+        : "";
+      example = `${authSetup}const response = await fetch(${JSON.stringify(url)}${options});\nconsole.log(response.status, await response.text());`;
+    } else {
+      const auth = state.proxyAuth
+        ? " --header " + shellQuote("X-FaultDeck-Token: <token-from-your-deployment>")
+        : "";
+      example = "curl --include" + auth + " --url " + shellQuote(url);
+    }
+    // Generated snippets are text only. Quote URLs for their target language;
+    // never request, read or embed deployment secrets in browser state.
+    if (lastExample !== example) {
+      elements["integration-code"].textContent = example;
+      lastExample = example;
+    }
+    elements["integration-auth-help"].textContent = state.proxyAuth
+      ? "Replace the curl token placeholder, or set FAULTDECK_PROXY_TOKEN in your Node.js process. Use your configured proxy token; if none was set, use the admin password. Keep this value in server-side configuration. curl examples use POSIX shell quoting."
+      : "Replace /your-endpoint with an existing backend route. Node.js examples run server-side with built-in fetch. curl examples use POSIX shell quoting. No proxy token is required by this instance.";
+  }
+
   function updateState(next) {
     state = next;
     const rules = state.rules || [];
     const logs = state.logs || [];
-    elements["version"].textContent = `v${state.version || "0.1.0"}`;
+    elements["version"].textContent = `v${state.version || "0.2.0"}`;
     elements["master-toggle"].setAttribute(
       "aria-checked",
       String(Boolean(state.enabled)),
@@ -133,6 +170,20 @@
     elements["play-target"].textContent = state.upstream;
     elements["play-target"].title = state.upstream;
     elements["use-demo"].hidden = state.upstream === state.demoUrl;
+    const usingDemo = Boolean(state.demoUrl) && state.upstream === state.demoUrl;
+    elements["integration-target-note"].textContent = usingDemo
+      ? "The built-in demo is currently selected. Replace the backend URL above to test your own service."
+      : "Your backend is selected. Client requests to the proxy are forwarded to the target shown above.";
+    elements["integration-target-note"].classList.toggle("demo-target-note", usingDemo);
+    elements["persistence-status"].textContent = state.persistent ? "Persistence enabled" : "Persistence not enabled";
+    elements["persistence-status"].classList.toggle("is-persistent", Boolean(state.persistent));
+    elements["persistence-note"].textContent = state.persistent
+      ? "Backend URL, rules and injection switch are saved across restarts. Request activity and counters are session-only. JSON export remains available."
+      : "Settings are in memory and will be lost on restart. Export your scenario, or start FaultDeck with persistent storage enabled.";
+    elements["proxy-auth-note"].textContent = state.proxyAuth
+      ? "Add the X-FaultDeck-Token header to requests from your server-side client. Use the token from your deployment configuration."
+      : "This instance does not require a proxy token. Send requests to the client base URL above.";
+    renderIntegrationExample();
     const stats = state.stats || {};
     elements["stat-requests"].textContent = formatNumber(stats.requests);
     elements["stat-injected"].textContent = formatNumber(stats.injected);
@@ -194,7 +245,7 @@
         node(
           "p",
           "",
-          "Add a fault rule to test the unexpected. Try a preset above, or create your own.",
+          "Create a rule for your backend’s endpoint, then send a real request to test the unexpected.",
         ),
       );
       const create = node("button", "text-button", "Create your first rule →");
@@ -451,6 +502,31 @@
     finishConfirmation(false);
   });
   elements["add-rule"].addEventListener("click", () => openRule());
+  elements["integration-add-rule"].addEventListener("click", () => openRule());
+  elements["integration-path"].addEventListener("input", renderIntegrationExample);
+  $$("[data-example]").forEach((button) => button.addEventListener("click", () => {
+    exampleLanguage = button.dataset.example;
+    $$("[data-example]").forEach((item) => {
+      const selected = item === button;
+      item.classList.toggle("selected", selected);
+      item.setAttribute("aria-pressed", String(selected));
+    });
+    renderIntegrationExample();
+  }));
+  elements["copy-example"].addEventListener("click", async () => {
+    if (!state) return;
+    try {
+      await navigator.clipboard.writeText(elements["integration-code"].textContent);
+      toast("Connection example copied. Replace the endpoint and any token placeholder before running.");
+    } catch {
+      const range = document.createRange();
+      range.selectNodeContents(elements["integration-code"]);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      toast("Example selected. Press Ctrl+C or ⌘C to copy.");
+    }
+  });
   $$("[data-close-rule]").forEach((button) =>
     button.addEventListener("click", () => elements["rule-dialog"].close()),
   );

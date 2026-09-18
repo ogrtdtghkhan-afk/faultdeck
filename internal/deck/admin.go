@@ -2,6 +2,7 @@ package deck
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -29,6 +30,17 @@ func apiError(w http.ResponseWriter, status int, err error) {
 	writeJSON(w, status, map[string]string{"error": err.Error()})
 }
 
+func mutationError(w http.ResponseWriter, err error) {
+	status := http.StatusBadRequest
+	if errors.Is(err, ErrPersistence) {
+		status = http.StatusInternalServerError
+		err = fmt.Errorf("cannot save workspace; check the data directory permissions and free space")
+	} else if errors.Is(err, ErrRuleNotFound) {
+		status = http.StatusNotFound
+	}
+	apiError(w, status, err)
+}
+
 func (d *Deck) AdminHandler(ui http.Handler) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/state", func(w http.ResponseWriter, r *http.Request) { writeJSON(w, 200, d.State()) })
@@ -41,23 +53,18 @@ func (d *Deck) AdminHandler(ui http.Handler) http.Handler {
 		}
 		created, err := d.AddRule(rule)
 		if err != nil {
-			apiError(w, 400, err)
+			mutationError(w, err)
 			return
 		}
 		writeJSON(w, 201, created)
 	})
 	mux.HandleFunc("PUT /api/rules/{id}", d.updateRule)
 	mux.HandleFunc("DELETE /api/rules/{id}", func(w http.ResponseWriter, r *http.Request) {
-		d.mu.Lock()
-		defer d.mu.Unlock()
-		for i := range d.rules {
-			if d.rules[i].ID == r.PathValue("id") {
-				d.rules = append(d.rules[:i], d.rules[i+1:]...)
-				w.WriteHeader(204)
-				return
-			}
+		if err := d.DeleteRule(r.PathValue("id")); err != nil {
+			mutationError(w, err)
+			return
 		}
-		apiError(w, 404, fmt.Errorf("rule not found"))
+		w.WriteHeader(204)
 	})
 	mux.HandleFunc("POST /api/reset", func(w http.ResponseWriter, r *http.Request) { d.Reset(); writeJSON(w, 200, d.State()) })
 	mux.HandleFunc("DELETE /api/logs", func(w http.ResponseWriter, r *http.Request) {
@@ -77,7 +84,7 @@ func (d *Deck) AdminHandler(ui http.Handler) http.Handler {
 			return
 		}
 		if err := d.Import(scenario); err != nil {
-			apiError(w, 400, err)
+			mutationError(w, err)
 			return
 		}
 		writeJSON(w, 200, d.State())
@@ -91,23 +98,32 @@ func (d *Deck) AdminHandler(ui http.Handler) http.Handler {
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("Cache-Control", "no-store")
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
-		hostname := r.Host
-		if host, _, err := net.SplitHostPort(r.Host); err == nil {
-			hostname = host
-		}
-		hostname = strings.TrimSuffix(strings.ToLower(hostname), ".")
-		ip := net.ParseIP(hostname)
-		if hostname != "localhost" && (ip == nil || !ip.IsLoopback()) {
-			apiError(w, 403, fmt.Errorf("control interface requires a loopback hostname"))
+		// A minimal liveness endpoint lets containers check their own listener.
+		// It discloses no configuration and never probes the upstream.
+		if r.URL.Path == "/healthz" && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
+			w.WriteHeader(http.StatusOK)
 			return
 		}
-		if origin := r.Header.Get("Origin"); origin != "" && origin != "http://"+r.Host {
+		origin, allowed := d.controlOrigin(r.Host)
+		if !allowed {
+			apiError(w, 403, fmt.Errorf("untrusted control hostname; set --ui-origin for this address"))
+			return
+		}
+		if supplied := r.Header.Get("Origin"); supplied != "" && supplied != origin {
 			apiError(w, 403, fmt.Errorf("cross-origin access denied"))
 			return
 		}
 		if r.Header.Get("Sec-Fetch-Site") == "cross-site" {
 			apiError(w, 403, fmt.Errorf("cross-site access denied"))
 			return
+		}
+		if d.config.AdminPassword != "" {
+			user, password, ok := r.BasicAuth()
+			if !ok || !secretEqual(user, d.config.AdminUser) || !secretEqual(password, d.config.AdminPassword) {
+				w.Header().Set("WWW-Authenticate", `Basic realm="FaultDeck", charset="UTF-8"`)
+				apiError(w, http.StatusUnauthorized, fmt.Errorf("administrator authentication required"))
+				return
+			}
 		}
 		if r.Method != http.MethodGet && r.Method != http.MethodHead && r.Header.Get("X-FaultDeck") != "1" {
 			apiError(w, 403, fmt.Errorf("missing X-FaultDeck: 1 header"))
@@ -126,24 +142,11 @@ func (d *Deck) configure(w http.ResponseWriter, r *http.Request) {
 		apiError(w, 400, err)
 		return
 	}
-	var target *url.URL
-	if change.Upstream != nil {
-		var err error
-		target, err = d.validateTarget(*change.Upstream)
-		if err != nil {
-			apiError(w, 400, err)
-			return
-		}
+	state, err := d.Configure(change.Upstream, change.Enabled)
+	if err != nil {
+		mutationError(w, err)
+		return
 	}
-	d.mu.Lock()
-	if target != nil {
-		d.target = target
-	}
-	if change.Enabled != nil {
-		d.enabled = *change.Enabled
-	}
-	state := d.stateLocked()
-	d.mu.Unlock()
 	writeJSON(w, 200, state)
 }
 
@@ -153,21 +156,12 @@ func (d *Deck) updateRule(w http.ResponseWriter, r *http.Request) {
 		apiError(w, 400, err)
 		return
 	}
-	if err := validateRule(&rule); err != nil {
-		apiError(w, 400, err)
+	updated, err := d.UpdateRule(r.PathValue("id"), rule)
+	if err != nil {
+		mutationError(w, err)
 		return
 	}
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	for i := range d.rules {
-		if d.rules[i].ID == r.PathValue("id") {
-			rule.ID = d.rules[i].ID
-			d.rules[i] = rule
-			writeJSON(w, 200, rule)
-			return
-		}
-	}
-	apiError(w, 404, fmt.Errorf("rule not found"))
+	writeJSON(w, 200, updated)
 }
 
 func (d *Deck) play(w http.ResponseWriter, r *http.Request) {
@@ -188,10 +182,17 @@ func (d *Deck) play(w http.ResponseWriter, r *http.Request) {
 		apiError(w, 400, fmt.Errorf("enter a relative path beginning with /"))
 		return
 	}
-	request, err := http.NewRequestWithContext(r.Context(), input.Method, d.config.ProxyURL+input.Path, nil)
+	proxyURL := d.config.InternalProxyURL
+	if proxyURL == "" {
+		proxyURL = d.config.ProxyURL
+	}
+	request, err := http.NewRequestWithContext(r.Context(), input.Method, proxyURL+input.Path, nil)
 	if err != nil {
 		apiError(w, 400, fmt.Errorf("invalid request path"))
 		return
+	}
+	if d.config.ProxyToken != "" {
+		request.Header.Set("X-FaultDeck-Token", d.config.ProxyToken)
 	}
 	// A dedicated transport avoids implicit retries on reused GET connections, which
 	// would hide a deliberately injected disconnect in this one-request playground.

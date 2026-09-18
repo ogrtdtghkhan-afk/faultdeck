@@ -1,0 +1,37 @@
+services:
+  faultdeck:
+    build:
+      context: .
+    command:
+      - --listen
+      - 0.0.0.0
+      - --data-dir
+      - /data
+      - --ui-origin
+      - ${FAULTDECK_UI_ORIGIN:-http://127.0.0.1:7331}
+      - --proxy-url
+      - ${FAULTDECK_PROXY_URL:-http://127.0.0.1:7332}
+    environment:
+      FAULTDECK_ADMIN_USER: ${FAULTDECK_ADMIN_USER:-admin}
+      FAULTDECK_ADMIN_PASSWORD: ${FAULTDECK_ADMIN_PASSWORD:?Set FAULTDECK_ADMIN_PASSWORD in .env to a random password of at least 12 characters}
+      FAULTDECK_PROXY_TOKEN: ${FAULTDECK_PROXY_TOKEN:-}
+    ports:
+      - "127.0.0.1:${FAULTDECK_UI_PORT:-7331}:7331"
+      - "127.0.0.1:${FAULTDECK_PROXY_PORT:-7332}:7332"
+    volumes:
+      - faultdeck-data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 10s
+
+volumes:
+  faultdeck-data:

@@ -1,12 +1,15 @@
 package deck
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
 )
+
+var ErrRuleNotFound = errors.New("rule not found")
 
 type Deck struct {
 	mu           sync.Mutex
@@ -34,11 +37,33 @@ func New(config Config) (*Deck, error) {
 	t.MaxIdleConns = 100
 	t.MaxIdleConnsPerHost = 20
 	d := &Deck{config: config, enabled: true, rules: []Rule{}, logs: []Log{}, startedAt: time.Now().UTC().Format(time.RFC3339), scenarioName: "My scenario", transport: t}
+	saved, found, err := loadWorkspace(config.DataDir)
+	if err != nil {
+		d.Close()
+		return nil, err
+	}
+	if found {
+		u, rules, err := d.validateScenario(saved)
+		if err != nil {
+			d.Close()
+			return nil, fmt.Errorf("%w: invalid saved workspace: %v", ErrPersistence, err)
+		}
+		for i := range rules {
+			rules[i].ID = d.nextIDLocked()
+		}
+		d.target, d.enabled, d.rules, d.scenarioName = u, saved.Enabled, rules, saved.Name
+		return d, nil
+	}
 	u, err := d.validateTarget(config.Upstream)
 	if err != nil {
+		d.Close()
 		return nil, err
 	}
 	d.target = u
+	if err := d.saveWorkspace(d.scenarioLocked()); err != nil {
+		d.Close()
+		return nil, err
+	}
 	return d, nil
 }
 
@@ -56,7 +81,7 @@ func (d *Deck) stateLocked() State {
 	for i := range d.logs {
 		logs[i] = d.logs[len(d.logs)-1-i]
 	}
-	return State{Version: d.config.Version, ProxyURL: d.config.ProxyURL, DemoURL: d.config.DemoURL, Upstream: d.target.String(), Enabled: d.enabled, StartedAt: d.startedAt, Rules: rules, Stats: d.stats, Logs: logs}
+	return State{Version: d.config.Version, ProxyURL: d.config.ProxyURL, DemoURL: d.config.DemoURL, Upstream: d.target.String(), Enabled: d.enabled, Persistent: d.config.DataDir != "", ProxyAuth: d.config.ProxyToken != "", StartedAt: d.startedAt, Rules: rules, Stats: d.stats, Logs: logs}
 }
 
 func (d *Deck) nextIDLocked() string { d.serial++; return fmt.Sprintf("r-%d", d.serial) }
@@ -70,36 +95,124 @@ func (d *Deck) AddRule(r Rule) (Rule, error) {
 	if len(d.rules) >= 100 {
 		return Rule{}, fmt.Errorf("maximum 100 rules")
 	}
-	r.ID = d.nextIDLocked()
-	d.rules = append(d.rules, r)
+	r.ID = fmt.Sprintf("r-%d", d.serial+1)
+	candidate := d.scenarioLocked()
+	candidate.Rules = append(candidate.Rules, r)
+	if err := d.saveWorkspace(candidate); err != nil {
+		return Rule{}, err
+	}
+	d.serial++
+	d.rules = candidate.Rules
 	return r, nil
 }
 
-func (d *Deck) Import(s Scenario) error {
-	if s.Version != 1 {
-		return fmt.Errorf("unsupported scenario version (expected 1)")
-	}
-	if len(s.Rules) > 100 {
-		return fmt.Errorf("maximum 100 rules")
-	}
-	if len(s.Name) > 120 {
-		return fmt.Errorf("scenario name is too long")
-	}
-	u, err := d.validateTarget(s.Upstream)
-	if err != nil {
-		return err
-	}
-	rules := append([]Rule{}, s.Rules...)
-	for i := range rules {
-		if err := validateRule(&rules[i]); err != nil {
-			return fmt.Errorf("rule %d: %w", i+1, err)
+// Configure persists a complete candidate before making either setting visible.
+func (d *Deck) Configure(upstream *string, enabled *bool) (State, error) {
+	var target *url.URL
+	if upstream != nil {
+		var err error
+		target, err = d.validateTarget(*upstream)
+		if err != nil {
+			return State{}, err
 		}
 	}
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	for i := range rules {
-		rules[i].ID = d.nextIDLocked()
+	candidate := d.scenarioLocked()
+	if target != nil {
+		candidate.Upstream = target.String()
 	}
+	if enabled != nil {
+		candidate.Enabled = *enabled
+	}
+	if err := d.saveWorkspace(candidate); err != nil {
+		return State{}, err
+	}
+	if target != nil {
+		d.target = target
+	}
+	d.enabled = candidate.Enabled
+	return d.stateLocked(), nil
+}
+
+func (d *Deck) UpdateRule(id string, r Rule) (Rule, error) {
+	if err := validateRule(&r); err != nil {
+		return Rule{}, err
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for i := range d.rules {
+		if d.rules[i].ID != id {
+			continue
+		}
+		r.ID = id
+		candidate := d.scenarioLocked()
+		candidate.Rules[i] = r
+		if err := d.saveWorkspace(candidate); err != nil {
+			return Rule{}, err
+		}
+		d.rules = candidate.Rules
+		return r, nil
+	}
+	return Rule{}, ErrRuleNotFound
+}
+
+func (d *Deck) DeleteRule(id string) error {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for i := range d.rules {
+		if d.rules[i].ID != id {
+			continue
+		}
+		candidate := d.scenarioLocked()
+		candidate.Rules = append(candidate.Rules[:i], candidate.Rules[i+1:]...)
+		if err := d.saveWorkspace(candidate); err != nil {
+			return err
+		}
+		d.rules = candidate.Rules
+		return nil
+	}
+	return ErrRuleNotFound
+}
+
+func (d *Deck) validateScenario(s Scenario) (*url.URL, []Rule, error) {
+	if s.Version != 1 {
+		return nil, nil, fmt.Errorf("unsupported scenario version (expected 1)")
+	}
+	if len(s.Rules) > 100 {
+		return nil, nil, fmt.Errorf("maximum 100 rules")
+	}
+	if len(s.Name) > 120 {
+		return nil, nil, fmt.Errorf("scenario name is too long")
+	}
+	u, err := d.validateTarget(s.Upstream)
+	if err != nil {
+		return nil, nil, err
+	}
+	rules := append([]Rule{}, s.Rules...)
+	for i := range rules {
+		if err := validateRule(&rules[i]); err != nil {
+			return nil, nil, fmt.Errorf("rule %d: %w", i+1, err)
+		}
+	}
+	return u, rules, nil
+}
+
+func (d *Deck) Import(s Scenario) error {
+	u, rules, err := d.validateScenario(s)
+	if err != nil {
+		return err
+	}
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	for i := range rules {
+		rules[i].ID = fmt.Sprintf("r-%d", d.serial+uint64(i)+1)
+	}
+	candidate := Scenario{Version: 1, Name: s.Name, Upstream: u.String(), Enabled: s.Enabled, Rules: rules}
+	if err := d.saveWorkspace(candidate); err != nil {
+		return err
+	}
+	d.serial += uint64(len(rules))
 	d.target, d.enabled, d.rules, d.scenarioName = u, s.Enabled, rules, s.Name
 	d.resetLocked()
 	return nil
@@ -108,11 +221,18 @@ func (d *Deck) Import(s Scenario) error {
 func (d *Deck) Export() Scenario {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	s := Scenario{Version: 1, Name: d.scenarioName, Upstream: d.target.String(), Enabled: d.enabled, Rules: append([]Rule{}, d.rules...)}
+	s := d.scenarioLocked()
 	for i := range s.Rules {
 		s.Rules[i].Matched, s.Rules[i].Hits = 0, 0
 	}
 	return s
+}
+
+// scenarioLocked copies live configuration, retaining runtime fields in the copy
+// so unrelated rules keep their counters when one rule is edited. The persistence
+// writer removes those runtime fields only from its own separate copy.
+func (d *Deck) scenarioLocked() Scenario {
+	return Scenario{Version: 1, Name: d.scenarioName, Upstream: d.target.String(), Enabled: d.enabled, Rules: append([]Rule{}, d.rules...)}
 }
 
 func (d *Deck) resetLocked() {

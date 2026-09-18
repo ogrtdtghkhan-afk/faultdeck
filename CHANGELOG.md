@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.0
+
+- Deploy with Docker Compose: nonroot container, healthcheck, persistent volume, and restart policy.
+- Persistent upstream, master switch, and rules, restored after a restart. Changes are saved before they become active; failed writes preserve the previous configuration.
+- Authenticated server deployment: administrator Basic Auth and a separate proxy access token, without replacing upstream business credentials.
+- Configurable listen address and public URLs, with an internal route for real playground requests behind a reverse proxy.
+- A backend connection guide in the control panel, client examples, and visible persistence/authentication status.
+- End-to-end container acceptance against an independent upstream, including forwarding, fault injection, authentication, and container replacement.
+- Docker deployment acceptance now gates binary releases alongside the cross-platform test suite.
+
+The binary now saves `./data/workspace.json` by default. Use `--data-dir ""` for the previous in-memory behavior. An explicit `--target` replaces the saved target while retaining rules; an explicit `--scenario` imports that file on each startup. Logs and injection counters still reset on restart.
+
 ## 0.1.0
 
 Initial release.

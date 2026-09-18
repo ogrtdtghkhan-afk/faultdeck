@@ -1,15 +1,19 @@
-# FaultDeck v0.1 API contract
+# FaultDeck v0.2 API contract
 
-Development contract. The control UI is on `http://127.0.0.1:7331`, the HTTP reverse proxy on port 7332, and the built-in demo upstream on 7333. All listen on loopback only. Default upstream is the demo. The fault switch starts enabled, with no rules. Vanilla HTML/CSS/JS is embedded into the Go executable. No external assets or dependencies at runtime.
+The control UI defaults to `http://127.0.0.1:7331`, the HTTP reverse proxy to port 7332, and the built-in demo upstream to 7333. The binary defaults to loopback; `--listen` enables authenticated remote/container use. A new workspace starts with the demo upstream, the fault switch enabled, and no rules. The embedded UI has no external assets or runtime dependencies.
 
 Every API mutation must include `X-FaultDeck: 1`. JSON requests use `Content-Type: application/json`. Same-origin only. Errors are JSON `{ "error": "..." }` with an appropriate non-2xx status.
+
+When `FAULTDECK_ADMIN_PASSWORD` is set, all control resources require HTTP Basic Auth (`FAULTDECK_ADMIN_USER`, default `admin`). The proxy separately requires `X-FaultDeck-Token`, configured by `FAULTDECK_PROXY_TOKEN` or falling back to the admin password. The token is removed before forwarding; business `Authorization` headers are preserved. Credentials never appear in state or scenario exports. `GET /healthz` returns an empty 200 without authentication.
+
+Configuration and rule changes are persisted when `--data-dir` is nonempty (default `./data`). A failed save returns 500 and leaves active configuration unchanged. Invalid input returns 400 and missing rule IDs return 404. Restart restores configuration and assigns runtime IDs, while clearing logs and counters.
 
 ## State
 
 `GET /api/state` returns:
 
 ```json
-{"version":"0.1.0","proxyUrl":"http://127.0.0.1:7332","demoUrl":"http://127.0.0.1:7333","upstream":"http://127.0.0.1:7333","enabled":true,"startedAt":"2026-09-18T00:00:00Z","rules":[],"stats":{"requests":0,"injected":0,"errors":0,"avgDurationMs":0},"logs":[]}
+{"version":"0.2.0","proxyUrl":"http://127.0.0.1:7332","demoUrl":"http://127.0.0.1:7333","upstream":"http://127.0.0.1:7333","enabled":true,"persistent":true,"proxyAuth":false,"startedAt":"2026-09-18T00:00:00Z","rules":[],"stats":{"requests":0,"injected":0,"errors":0,"avgDurationMs":0},"logs":[]}
 ```
 
 Poll state every 1200ms, preserving current editing state. Logs are newest first, bounded to 200. A log contains `id, time, method, path, status, durationMs, ruleId, ruleName, fault, error`. Status 0 means connection closed without HTTP response. Logs contain metadata only, never bodies, headers, or query strings. UI must render all dynamic data with textContent / safe DOM methods.
@@ -42,4 +46,6 @@ Demo endpoints: `GET /api/orders`, `GET /api/products`, `GET /api/health`, `GET 
 
 ## UI direction
 
-Product name FaultDeck, tagline 'Break it here. Ship it stronger.' A polished dark developer workbench with warm orange accent, faint grid, spacious typography, attractive empty state. Three areas: top target + master switch; rule cards + create/edit dialog; activity and built-in playground. Include useful selectable presets (Slow response: 1500ms; Rate limited: 429; Fail twice: 503 limit 2; Disconnect). Presets create rules, not phantom frontend-only state. Show source upstream and proxy address clearly. Small local-only status. Explain rule hits and exhaustion. All controls functional. Keyboard accessible, responsive, no external fonts/icons/CDN. Prefer inline SVG and system fonts. UI can be English with a compact EN/中文 switch if feasible, but usability first.
+The playground uses an internal proxy URL and supplies its access token server-side, so it works behind an HTTPS reverse proxy without exposing the token to the browser. It does not supply business credentials; use your own client for upstream APIs requiring custom headers or request bodies.
+
+The control panel starts with the real backend connection workflow: set the upstream, point the client at the proxy, supply the proxy token if required, and create a fault rule. It shows persistence status and the effective target. Presets create backend rules. Dynamic content uses safe DOM methods, and client snippets contain credential placeholders only. The layout is keyboard accessible and responsive, with no external fonts, icons, or CDN dependencies.

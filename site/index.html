@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#111415" />
     <meta
       name="description"
-      content="Break it here. Ship it stronger. FaultDeck is a free, open-source local API proxy for delays, errors, timeouts, and dropped connections. Try the interactive recovery demo."
+      content="Deploy FaultDeck with Docker Compose or a single executable. A self-hosted API fault proxy with a protected control panel, persistent rules, and real backend traffic."
     />
     <meta property="og:type" content="website" />
     <meta
@@ -15,7 +15,7 @@
     />
     <meta
       property="og:description"
-      content="Test what happens when your API fails. A local failure lab with a control panel, repeatable scenarios, and no account required."
+      content="Run a real API failure lab on your machine or server. Deploy with Docker Compose, connect your backend, and test recovery with real requests."
     />
     <meta
       property="og:url"
@@ -81,11 +81,12 @@
       </header>
 
       <main id="main">
+        <p class="site-purpose" data-i18n="sitePurpose">This is the project overview. The working control panel runs in your Docker deployment or downloaded executable.</p>
         <section class="hero" aria-labelledby="hero-title">
           <div class="hero-copy">
             <span class="eyebrow"
               ><span aria-hidden="true">+</span>
-              <span data-i18n="eyebrow">YOUR LOCAL FAILURE LAB</span></span
+              <span data-i18n="eyebrow">SELF-HOSTED API FAULT INJECTION</span></span
             >
             <h1 id="hero-title">
               <span data-i18n="heroLineOne">Break it here.</span><br /><span
@@ -94,42 +95,187 @@
                 >Ship it stronger.</span
               >
             </h1>
-            <p class="hero-description" data-i18n="heroDescription">
-              Slow responses. Failed requests. Dropped connections. Make them
-              happen on purpose—and see how your app recovers.
-            </p>
+            <p class="hero-description" data-i18n="heroDescription">Deploy a real proxy in front of your development API. Add delays, errors, and dropped connections—then check how your app recovers.</p>
             <div class="hero-actions">
               <a
                 class="button button-primary"
-                href="https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest"
+                href="https://github.com/ogrtdtghkhan-afk/faultdeck#deploy-with-docker"
                 ><svg viewBox="0 0 20 20" aria-hidden="true">
                   <path d="M10 2v11m-4-4 4 4 4-4M3 13v4h14v-4" /></svg
-                ><span data-i18n="download">Download FaultDeck</span></a
-              ><a class="button button-quiet" href="#quick-start"
-                ><span data-i18n="quickStartLink">Get started</span
+                ><span data-i18n="deployCta">Deploy with Docker</span></a
+              ><a class="button button-quiet" href="https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest"
+                ><span data-i18n="binaryCta">Download binary</span
                 ><span aria-hidden="true">↗</span></a
               >
             </div>
-            <p class="hero-note" data-i18n="heroNote">
-              Free & open source · Windows, macOS & Linux
-            </p>
+            <p class="hero-note" data-i18n="heroNote">Docker Compose or a single executable · Free &amp; open source</p>
             <div class="trust-line">
               <span class="green-dot" aria-hidden="true"></span
               ><span data-i18n="trustLine"
-                >Runs on your machine. No account. No cloud.</span
+                >Your infrastructure. Persistent rules. Real API traffic.</span
               >
             </div>
           </div>
 
+          <section class="deploy-card" aria-labelledby="deploy-title">
+            <div class="deploy-card-heading"><span class="small-label">DOCKER COMPOSE</span><h2 id="deploy-title" data-i18n="deployTitle">Run the actual product.</h2><p data-i18n="deployDescription">A real proxy and control panel, on your own machine or server.</p></div>
+            <div class="deploy-card-content">
+              <span class="deploy-step" data-i18n="deployStepOne">1. Get the project and configuration</span>
+              <pre><code>git clone https://github.com/ogrtdtghkhan-afk/faultdeck.git
+cd faultdeck
+cp .env.example .env</code></pre>
+              <p class="deploy-note" data-i18n="deployPassword">2. Edit .env and set FAULTDECK_ADMIN_PASSWORD to a password of at least 12 characters. In PowerShell, use Copy-Item instead of cp.</p>
+              <span class="deploy-step" data-i18n="deployStepThree">3. Start the service</span>
+              <pre><code>docker compose up --build -d</code></pre>
+              <div class="deploy-endpoint"><span data-i18n="controlPanel">Control panel</span><code>http://127.0.0.1:7331</code></div>
+              <p class="deploy-note" data-i18n="deployLogin">Sign in as admin with the password you configured. Set your backend URL in the control panel.</p>
+              <a class="inline-link" href="https://github.com/ogrtdtghkhan-afk/faultdeck/blob/main/docs/deployment.md" data-deploy-doc><span data-i18n="deploymentGuide">Full deployment &amp; server access guide</span><span aria-hidden="true">↗</span></a>
+            </div>
+            <div class="deployment-capabilities"><span data-i18n="protectedAdmin">Protected admin panel</span><span data-i18n="persistentRules">Persistent configuration</span></div>
+          </section>
+        </section>
+
+        <section class="fault-types" aria-label="Supported failures">
+          <article>
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l3 2M9 2h6" />
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="latencyTitle">Slow it down</h2>
+              <p data-i18n="latencyDescription">Check loading states and client timeouts.</p>
+            </div>
+            <span class="feature-code">+1500ms</span>
+          </article>
+          <article>
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m12 3 10 17H2L12 3zM12 9v5m0 3h.01" />
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="errorTitle">Make it fail</h2>
+              <p data-i18n="errorDescription">Exercise rate limits, errors, and retries.</p>
+            </div>
+            <span class="feature-code">429 / 503</span>
+          </article>
+          <article>
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="m3 3 18 18M8 8l-4 4 4 4 4-4m1 1 3 3 4-4-3-3M5 15l-3 3m17-12 3-3"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="disconnectTitle">Cut the connection</h2>
+              <p data-i18n="disconnectDescription">See what happens when no response arrives.</p>
+            </div>
+            <span class="feature-code">×</span>
+          </article>
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="dashboard-title">
+          <div class="section-intro">
+            <div>
+              <span class="eyebrow" data-i18n="dashboardEyebrow"
+                >THE REAL THING</span
+              >
+              <h2 id="dashboard-title" data-i18n="dashboardTitle">A control panel for the unexpected.</h2>
+            </div>
+            <p data-i18n="dashboardDescription">Connect your backend, create a fault rule, and inspect real request results. Docker stores your target and rules across restarts.</p>
+          </div>
+          <figure class="dashboard-figure">
+            <div class="window-bar">
+              <span class="window-dots" aria-hidden="true"
+                ><i></i><i></i><i></i></span
+              ><code>127.0.0.1:7331</code
+              ><span class="window-badge" data-i18n="localDashboard"
+                >SELF-HOSTED DASHBOARD</span
+              >
+            </div>
+            <img
+              src="./assets/fail-twice.png"
+              width="1265"
+              height="712"
+              alt="FaultDeck dashboard after two injected 503 failures. The rule has reached its limit and the next request returns 200."
+              loading="lazy"
+              decoding="async"
+              id="dashboard-image"
+            />
+            <figcaption>
+              <span class="green-dot" aria-hidden="true"></span
+              ><span data-i18n="screenshotCaption"
+                >Actual FaultDeck dashboard. Two injected failures, followed by a successful response.</span
+              >
+            </figcaption>
+          </figure>
+        </section>
+
+        <section
+          class="quick-start"
+          id="quick-start"
+          aria-labelledby="quick-start-title"
+        >
+          <div class="section-intro">
+            <div>
+              <span class="eyebrow" data-i18n="quickStartEyebrow"
+                >CONNECT YOUR REAL APPLICATION</span
+              >
+              <h2 id="quick-start-title" data-i18n="quickStartTitle">Deploy. Connect. Test recovery.</h2>
+            </div>
+            <p data-i18n="quickStartDescription">Point FaultDeck at your backend, then point your client at FaultDeck. The built-in demo is optional.</p>
+          </div>
+          <div class="steps-grid">
+            <article class="step">
+              <span class="step-number">01 /</span>
+              <h3 data-i18n="stepOneTitle">Start your instance</h3>
+              <p data-i18n="stepOneDescription">Use Docker Compose above, or extract a release and start the executable:</p>
+              <div class="commands">
+                <div><span>macOS / Linux</span><code>./faultdeck</code></div>
+                <div><span>Windows</span><code>.\faultdeck.exe</code></div>
+              </div>
+              <a
+                href="https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest"
+                class="inline-link"
+                ><span data-i18n="chooseDownload">Choose your download</span>
+                <span aria-hidden="true">↗</span></a
+              >
+            </article>
+            <article class="step">
+              <span class="step-number">02 /</span>
+              <h3 data-i18n="stepTwoTitle">Connect your backend</h3>
+              <p data-i18n="stepTwoDescription">Open your control panel. Set the upstream target to your real backend, reachable from the FaultDeck server.</p>
+              <code class="address-code">http://127.0.0.1:7331</code>
+              <p class="step-aside" data-i18n="stepTwoAside">The initial target may be the built-in demo. Replace it with your service URL and save.</p>
+            </article>
+            <article class="step">
+              <span class="step-number">03 /</span>
+              <h3 data-i18n="stepThreeTitle">Send real app requests</h3>
+              <p data-i18n="stepThreeDescription">Set your client’s base URL to the proxy address shown in the panel. Add X-FaultDeck-Token from your deployment configuration when required.</p>
+              <div
+                class="result-sequence"
+                aria-label="Fail-twice rule: 503, 503, then the upstream response"
+              >
+                <span>503</span><i aria-hidden="true">→</i><span>503</span
+                ><i aria-hidden="true">→</i><span class="success" data-i18n="upstreamResponse">upstream</span>
+              </div>
+              <p class="step-aside" data-i18n="stepThreeAside">Create a rule for your endpoint. Make real requests from your app, then inspect the activity log. A fail-twice rule lets the third request reach your backend.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="simulation-section" aria-labelledby="simulation-section-title">
+          <div class="simulation-explanation"><span class="eyebrow" data-i18n="simulationEyebrow">OPTIONAL BROWSER WALKTHROUGH</span><h2 id="simulation-section-title" data-i18n="simulationTitle">See one failure pattern.</h2><p data-i18n="simulationIntro">This small simulation explains the “fail twice” rule. To intercept your own app’s requests, run FaultDeck with Docker Compose or the executable above.</p><a class="inline-link" href="#quick-start"><span data-i18n="backToSetup">Connect your real backend</span><span aria-hidden="true">↑</span></a></div>
           <section class="demo-card" aria-labelledby="demo-title">
             <div class="demo-heading">
               <div>
                 <span class="small-label" data-i18n="interactiveDemo"
                   >INTERACTIVE DEMO</span
                 >
-                <h2 id="demo-title" data-i18n="demoTitle">
-                  Fail twice. Then recover.
-                </h2>
+                <h2 id="demo-title" data-i18n="demoTitle">Fail twice. Then recover.</h2>
               </div>
               <span class="simulation-label" data-i18n="simulation"
                 >SIMULATION</span
@@ -222,182 +368,13 @@
           </section>
         </section>
 
-        <section class="fault-types" aria-label="Supported failures">
-          <article>
-            <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="13" r="8" />
-                <path d="M12 9v4l3 2M9 2h6" />
-              </svg>
-            </div>
-            <div>
-              <h2 data-i18n="latencyTitle">Slow it down</h2>
-              <p data-i18n="latencyDescription">
-                Check loading states and client timeouts.
-              </p>
-            </div>
-            <span class="feature-code">+1500ms</span>
-          </article>
-          <article>
-            <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path d="m12 3 10 17H2L12 3zM12 9v5m0 3h.01" />
-              </svg>
-            </div>
-            <div>
-              <h2 data-i18n="errorTitle">Make it fail</h2>
-              <p data-i18n="errorDescription">
-                Exercise rate limits, errors, and retries.
-              </p>
-            </div>
-            <span class="feature-code">429 / 503</span>
-          </article>
-          <article>
-            <div class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24">
-                <path
-                  d="m3 3 18 18M8 8l-4 4 4 4 4-4m1 1 3 3 4-4-3-3M5 15l-3 3m17-12 3-3"
-                />
-              </svg>
-            </div>
-            <div>
-              <h2 data-i18n="disconnectTitle">Cut the connection</h2>
-              <p data-i18n="disconnectDescription">
-                See what happens when no response arrives.
-              </p>
-            </div>
-            <span class="feature-code">×</span>
-          </article>
-        </section>
-
-        <section class="dashboard-section" aria-labelledby="dashboard-title">
-          <div class="section-intro">
-            <div>
-              <span class="eyebrow" data-i18n="dashboardEyebrow"
-                >THE REAL THING</span
-              >
-              <h2 id="dashboard-title" data-i18n="dashboardTitle">
-                A control panel for the unexpected.
-              </h2>
-            </div>
-            <p data-i18n="dashboardDescription">
-              Choose a fault, send a request, and see exactly which rule fired.
-              Save the scenario to run it again.
-            </p>
-          </div>
-          <figure class="dashboard-figure">
-            <div class="window-bar">
-              <span class="window-dots" aria-hidden="true"
-                ><i></i><i></i><i></i></span
-              ><code>127.0.0.1:7331</code
-              ><span class="window-badge" data-i18n="localDashboard"
-                >LOCAL DASHBOARD</span
-              >
-            </div>
-            <img
-              src="./assets/fail-twice.png"
-              width="1265"
-              height="712"
-              alt="FaultDeck dashboard after two injected 503 failures. The rule has reached its limit and the next request returns 200."
-              loading="lazy"
-              decoding="async"
-              id="dashboard-image"
-            />
-            <figcaption>
-              <span class="green-dot" aria-hidden="true"></span
-              ><span data-i18n="screenshotCaption"
-                >Actual FaultDeck dashboard. Two injected failures, followed by
-                a successful response.</span
-              >
-            </figcaption>
-          </figure>
-        </section>
-
-        <section
-          class="quick-start"
-          id="quick-start"
-          aria-labelledby="quick-start-title"
-        >
-          <div class="section-intro">
-            <div>
-              <span class="eyebrow" data-i18n="quickStartEyebrow"
-                >YOUR FIRST FAILURE, IN MINUTES</span
-              >
-              <h2 id="quick-start-title" data-i18n="quickStartTitle">
-                Bring your app. Or try ours.
-              </h2>
-            </div>
-            <p data-i18n="quickStartDescription">
-              A demo API is included. Start testing without an API key, a
-              dataset, or your own backend.
-            </p>
-          </div>
-          <div class="steps-grid">
-            <article class="step">
-              <span class="step-number">01 /</span>
-              <h3 data-i18n="stepOneTitle">Download & start</h3>
-              <p data-i18n="stepOneDescription">
-                Extract the release for your system. Open a terminal in that
-                folder and run:
-              </p>
-              <div class="commands">
-                <div><span>macOS / Linux</span><code>./faultdeck</code></div>
-                <div><span>Windows</span><code>.\faultdeck.exe</code></div>
-              </div>
-              <a
-                href="https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest"
-                class="inline-link"
-                ><span data-i18n="chooseDownload">Choose your download</span>
-                <span aria-hidden="true">↗</span></a
-              >
-            </article>
-            <article class="step">
-              <span class="step-number">02 /</span>
-              <h3 data-i18n="stepTwoTitle">Open the control panel</h3>
-              <p data-i18n="stepTwoDescription">
-                Visit this local address in your browser. The built-in demo is
-                already connected.
-              </p>
-              <code class="address-code">http://127.0.0.1:7331</code>
-              <p class="step-aside" data-i18n="stepTwoAside">
-                Ready for your app? Set your backend as the target and use port
-                7332 as your app’s API address.
-              </p>
-            </article>
-            <article class="step">
-              <span class="step-number">03 /</span>
-              <h3 data-i18n="stepThreeTitle">Fail twice. Check recovery.</h3>
-              <p data-i18n="stepThreeDescription">
-                Choose the “Fail twice” preset. Send three requests to
-                /api/orders in the playground.
-              </p>
-              <div
-                class="result-sequence"
-                aria-label="Expected demo statuses: 503, 503, 200"
-              >
-                <span>503</span><i aria-hidden="true">→</i><span>503</span
-                ><i aria-hidden="true">→</i><span class="success">200</span>
-              </div>
-              <p class="step-aside" data-i18n="stepThreeAside">
-                Now those are real requests. Check the activity log to see what
-                happened.
-              </p>
-            </article>
-          </div>
-        </section>
-
         <section class="closing-section" aria-labelledby="closing-title">
           <div>
             <span class="eyebrow" data-i18n="closingEyebrow"
               >BUILT FOR THE UNHAPPY PATH</span
             >
-            <h2 id="closing-title" data-i18n="closingTitle">
-              Find the failure before your users do.
-            </h2>
-            <p data-i18n="closingDescription">
-              Try a scenario. Tell us what broke. Help shape a better
-              development tool.
-            </p>
+            <h2 id="closing-title" data-i18n="closingTitle">Find the failure before your users do.</h2>
+            <p data-i18n="closingDescription">Try a scenario. Tell us what broke. Help shape a better development tool.</p>
           </div>
           <div class="closing-actions">
             <a

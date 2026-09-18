@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#111314" />
-    <title>FaultDeck — Your local failure lab</title>
+    <title>FaultDeck — API fault control panel</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fa7d48'/%3E%3Cpath d='M10 8h14l-3 5h-6v4h6l-3 5h-3v4h-5z' fill='%23111314'/%3E%3C/svg%3E"
@@ -20,7 +20,7 @@
             ><svg viewBox="0 0 32 32">
               <path d="M9 7h16l-3 6h-7v4h7l-3 5h-4v5H9z" /></svg></span
           ><span
-            >FaultDeck<span class="version" id="version">v0.1.0</span></span
+            >FaultDeck<span class="version" id="version">v0.2.0</span></span
           ></a
         >
         <nav class="header-actions" aria-label="Workspace actions">
@@ -52,13 +52,13 @@
         <section class="hero" aria-labelledby="page-title">
           <div>
             <div class="eyebrow">
-              <span class="tiny-cross">+</span> YOUR LOCAL FAILURE LAB
+              <span class="tiny-cross">+</span> YOUR API FAILURE LAB
             </div>
             <h1 id="page-title">
               Break it here.<br class="mobile-break" />
               <span>Ship it stronger.</span>
             </h1>
-            <p>Put your APIs under pressure. See how your app holds up.</p>
+            <p>Connect your backend. Inject faults into real requests. Check recovery.</p>
           </div>
           <div class="master-control">
             <div>
@@ -84,7 +84,7 @@
         >
           <form id="upstream-form" class="upstream-form">
             <label class="label" for="upstream"
-              >UPSTREAM TARGET
+              >1. YOUR BACKEND URL
               <span class="subtle" id="upstream-kind">YOUR BACKEND</span></label
             >
             <div class="input-action">
@@ -102,11 +102,11 @@
                 class="button button-outline button-small"
                 id="save-target"
               >
-                Connect
+                Save target
               </button>
             </div>
             <span class="field-note" id="target-note"
-              >Requests are forwarded to this address.</span
+              >Enter an HTTP(S) backend reachable from the FaultDeck server.</span
             >
           </form>
           <div class="connection-flow" aria-hidden="true">
@@ -115,7 +115,7 @@
           </div>
           <div class="proxy-info">
             <span class="label"
-              >YOUR PROXY <span class="subtle">USE THIS IN YOUR APP</span></span
+              >2. CLIENT BASE URL <span class="subtle">USE THIS IN YOUR APP</span></span
             >
             <div class="proxy-address">
               <span class="proxy-dot"></span
@@ -132,8 +132,28 @@
                 </svg>
               </button>
             </div>
-            <span class="field-note">Same requests. A little more chaos.</span>
+            <span class="field-note">Replace your client’s API base URL with this proxy address.</span>
           </div>
+        </section>
+
+        <section class="integration-panel panel" aria-labelledby="integration-title">
+          <div class="integration-heading">
+            <div><h2 id="integration-title">Connect your application</h2><p id="integration-target-note">Save your backend URL above, then point your client at the proxy.</p></div>
+            <span id="persistence-status" class="persistence-badge">Checking storage…</span>
+          </div>
+          <div class="integration-steps">
+            <p><span class="setup-number">3</span><span id="proxy-auth-note">Checking proxy access…</span></p>
+            <p><span class="setup-number">4</span><span>Create a rule for one of your backend’s paths, then make a request from your app or the playground below.</span><button class="text-button" id="integration-add-rule">Create rule →</button></p>
+          </div>
+          <details class="integration-examples">
+            <summary>Client connection examples <span>curl / Node.js</span></summary>
+            <div class="integration-example-content">
+              <div class="example-controls"><label for="integration-path">Your endpoint path<input id="integration-path" value="/your-endpoint" spellcheck="false" placeholder="/api/health" /></label><div class="segmented" role="group" aria-label="Client example language"><button class="selected" data-example="curl" aria-pressed="true">curl</button><button data-example="node" aria-pressed="false">Node.js</button></div><button class="button button-outline button-small" id="copy-example">Copy example</button></div>
+              <pre id="integration-code" tabindex="0">Connecting to your instance…</pre>
+              <p id="integration-auth-help" class="integration-help"></p>
+            </div>
+          </details>
+          <p class="persistence-note" id="persistence-note"></p>
         </section>
 
         <section class="metrics" aria-label="Session metrics">
@@ -191,7 +211,7 @@
             </div>
             <div class="presets">
               <div class="preset-heading">
-                <span class="label">START WITH A DEMO PRESET</span
+                <span class="label">OPTIONAL BUILT-IN DEMO PRESETS</span
                 ><span class="muted">GET /api/orders</span>
               </div>
               <div class="preset-buttons">
@@ -232,13 +252,13 @@
           >
             <div class="section-heading">
               <div class="heading-group">
-                <h2 id="playground-title">Request playground</h2>
+                <h2 id="playground-title">Real request playground</h2>
               </div>
               <span class="small-tag">LIVE</span>
             </div>
             <div class="playground-content">
               <p class="section-description">
-                Send a real request through your proxy.
+                Sends a real request to your currently configured backend, through the proxy.
               </p>
               <form id="play-form">
                 <div class="request-input">
@@ -279,7 +299,7 @@
                   id="response-body"
                   tabindex="0"
                 ><span class="response-placeholder">// Your response will appear here.
-// Try a preset, then send a request.</span></pre>
+// Set an existing backend path, then send a request.</span></pre>
               </div>
               <div class="playground-note">
                 <span class="hint-icon" aria-hidden="true">i</span>GET and HEAD
@@ -364,7 +384,7 @@
           <span
             ><span class="footer-mark" aria-hidden="true">ϟ</span> Small
             failures. Stronger software.</span
-          ><span>Runs locally · Metadata only · No account needed</span>
+          ><span>Self-hosted · Request metadata only · JSON scenario export</span>
         </footer>
       </main>
     </div>

@@ -2,11 +2,11 @@
 
 **在本地制造故障，让上线更有把握。**
 
-带可视化控制面板的本地 HTTP 故障代理。把应用的请求指向 FaultDeck，点击按钮模拟慢响应、错误码、超时或连接中断，检查你的异常处理是否真的有效。
+带可视化控制面板的 HTTP 故障代理，可以本机运行，也可以部署为带认证和规则持久化的服务。把应用的请求指向 FaultDeck，点击按钮模拟慢响应、错误码、超时或连接中断，检查你的异常处理是否真的有效。
 
 [English](README.md) · [下载](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) · [反馈问题](https://github.com/ogrtdtghkhan-afk/faultdeck/issues)
 
-[打开交互演示页](https://ogrtdtghkhan-afk.github.io/faultdeck/)：先在浏览器里模拟“失败两次后恢复”；下载工具后即可对真实请求注入故障。
+[部署真实可用的服务](docs/deployment.zh-CN.md) · [浏览器交互演示](https://ogrtdtghkhan-afk.github.io/faultdeck/)（模拟）
 
 [![CI](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml)
 
@@ -26,7 +26,28 @@
 
 ![真实演示：注入两次故障后规则完成，下一次请求恢复 200。](docs/assets/fail-twice.png)
 
-## 三分钟上手
+## 使用 Docker 部署
+
+部署可以代理真实请求的控制台与服务，包含认证和规则持久化：
+
+```sh
+git clone https://github.com/ogrtdtghkhan-afk/faultdeck.git
+cd faultdeck
+cp .env.example .env
+```
+
+PowerShell 将最后一行替换为 `Copy-Item .env.example .env`。在 `.env` 中给 `FAULTDECK_ADMIN_PASSWORD` 设置至少 12 个字符的自选随机密码，然后启动：
+
+```sh
+docker compose up --build -d
+docker compose ps
+```
+
+服务 healthy 后打开 **http://127.0.0.1:7331**，使用 `admin` 和自设密码登录，在 UI 设置真实上游。应用请求 **http://127.0.0.1:7332** 时携带 `X-FaultDeck-Token`；未单独设置令牌时使用管理员密码。命名卷会保存配置和规则，重建容器后仍可使用。
+
+宿主机/容器网络、远程访问、认证、持久化和真实容器验收见[中文部署指南](docs/deployment.zh-CN.md)。请使用当前源码仓库，旧版 v0.1.0 压缩包尚不包含这套部署文件。
+
+## 体验本机可执行文件
 
 想直接验证客户端重试？查看 [Node.js 自动重试和 Vite 接入示例](docs/integrations.md)，运行真实的 **503 → 503 → 200** 恢复流程。
 
@@ -42,13 +63,13 @@
 ./faultdeck
 ```
 
-打开 **http://127.0.0.1:7331**。不指定目标地址时，程序会自动启动内置演示 API。
+打开 **http://127.0.0.1:7331**。首次使用且没有配置目标时，程序默认连接内置演示 API；之后会从 `./data` 恢复保存的上游和规则。
 
 1. 在请求试验区向 `/api/orders` 发起一次请求，观察正常结果。
 2. 添加 **Fail twice** 预设，连续发起三次请求。
 3. 在活动记录中查看 `503`、`503`，然后恢复为上游的正常响应。
 
-试验区会向当前配置的上游发起真实请求。首次体验建议使用内置演示；下载完成后，演示可离线运行。
+试验区会向当前配置的上游发起真实请求。首次体验建议使用内置演示；下载完成后，演示可离线运行。本机可执行文件默认仅回环访问，可通过下文环境变量开启认证；部署服务请使用 Docker 说明。
 
 ### 从源码运行
 
@@ -70,11 +91,11 @@ go run ./cmd/faultdeck
 
 Windows 下将命令中的 `./faultdeck` 换成 `.\faultdeck.exe`。
 
-把应用在开发环境下的 API 基础地址改为 `http://127.0.0.1:7332`，然后打开控制面板，给目标接口添加规则，正常操作你的应用即可。
+把应用在开发环境下的 API 基础地址改为 `http://127.0.0.1:7332`。开启代理认证后，请携带配置的 `X-FaultDeck-Token`；业务自己的 `Authorization` 会保留。然后打开控制面板，给目标接口添加规则，正常操作你的应用即可。
 
 上游支持 HTTP、HTTPS 和基础路径；本地代理入口使用 HTTP。HTTPS 网页直接访问它可能受到浏览器混合内容限制，可通过开发服务器的代理接入。FaultDeck 保留上游的 CORS 行为，不会自动放开跨域访问。
 
-所有服务都绑定 `127.0.0.1`；首版请在同一台机器上使用应用后端与 FaultDeck。
+本机控制台和代理默认绑定 `127.0.0.1`，可通过 `--listen` 调整；远程绑定必须启用认证。内置演示仍在回环地址监听。Docker 默认也只发布宿主机回环端口，跨容器网络和远程访问见[部署指南](docs/deployment.zh-CN.md)。
 
 ## 四种故障
 
@@ -135,22 +156,31 @@ Timeout 是有时限的模拟，不会永久挂起连接。要测试客户端自
 
 | 参数 | 默认值 | 用途 |
 | --- | --- | --- |
-| `--target` | 内置演示 | 上游 HTTP(S) 地址 |
-| `--port` | `7332` | 本地代理端口 |
+| `--target` | 已保存目标，否则内置演示 | 显式覆盖上游 HTTP(S) 地址 |
+| `--listen` | `127.0.0.1` | 控制台和代理的监听地址 |
+| `--port` | `7332` | 代理端口 |
 | `--ui-port` | `7331` | 控制面板端口 |
 | `--demo-port` | `7333` | 内置演示端口 |
+| `--data-dir` | `./data` | 保存配置与规则；`--data-dir=` 关闭持久化 |
+| `--ui-origin` | 本机控制台 origin | 浏览器访问的协议、主机及端口 |
+| `--proxy-url` | 本机代理 origin | 展示给应用的代理地址 |
 | `--scenario` | 无 | 启动时加载场景 JSON |
+| `--healthcheck` | — | 检查内部控制监听，成功/失败退出 0/1 |
 | `--version` | — | 输出版本后退出 |
 
 场景文件已包含上游地址，因此 `--target` 与 `--scenario` 不能同时使用。完整参数见 `--help`，编程控制见 [HTTP API 说明](docs/api-contract.md)。
 
-## 使用边界与本地数据
+认证通过环境变量配置：`FAULTDECK_ADMIN_USER` 默认 `admin`；设置至少 12 个字符的 `FAULTDECK_ADMIN_PASSWORD` 开启 Basic Auth；`FAULTDECK_PROXY_TOKEN` 可单独设置至少 12 个字符的代理令牌，留空时使用管理员密码。远程访问必须设置管理员密码，随附 Compose 即使只发布宿主机本地端口也要求设置。
 
-v0.1 专注开发阶段的 HTTP 请求故障。SSE 仅透传，不支持逐事件修改或延迟；不保证 WebSocket 行为。本项目不是 TCP 流量整形工具、HTTPS 中间人代理或压测服务。
+## 使用边界与持久化数据
+
+v0.2 支持本机和容器部署，面向开发、测试阶段的 HTTP 请求故障。SSE 仅透传，不支持逐事件修改或延迟；不保证 WebSocket 行为。本项目不是 TCP 流量整形工具、HTTPS 中间人代理或压测服务。
+
+上游地址、故障总开关和规则会保存到数据目录。本机默认使用 `./data`，Docker 使用 `/data` 数据卷。运行计数和活动记录不持久化，服务重启后从零开始。
 
 最近 200 条请求记录仅保存在内存，包含方法、路径、状态、耗时及故障信息，不记录请求或响应正文、请求头、查询字符串。试验区会展示最多 64 KiB 的响应内容。路径本身仍可能含敏感标识。
 
-控制 API 的修改操作要求同源请求和专用请求头，没有用户身份认证。请保持控制端口仅在本机可访问，不要通过隧道或公网反向代理暴露。安全边界和漏洞反馈见 [SECURITY.md](SECURITY.md)。
+控制 API 校验配置的来源，修改操作要求 `X-FaultDeck: 1`。启用认证后，控制台和管理 API 使用 Basic Auth，业务代理要求 `X-FaultDeck-Token`，并在转发前移除该令牌。`/healthz` 是不要求认证的最小健康检查入口。SSH 访问和带认证的 HTTPS 反向代理配置见[部署指南](docs/deployment.zh-CN.md)，安全边界和漏洞反馈见 [SECURITY.md](SECURITY.md)。
 
 ## 开发
 

@@ -1911,6 +1911,56 @@ body:has(dialog[open]) {
     padding-left: 18px;
   }
 }
+.integration-panel {
+  margin-top: 15px;
+  padding: 18px 23px 13px;
+}
+.integration-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+}
+.integration-heading h2 { font-size: 13px; }
+.integration-heading p { color: #9ba9b0; font-size: 11px; margin: 6px 0 0; }
+.integration-heading .demo-target-note { color: #d5b79e; }
+.persistence-badge {
+  color: #aeb6bb;
+  border: 1px solid #485055;
+  border-radius: 5px;
+  padding: 4px 7px;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.persistence-badge.is-persistent { color: #aacfb2; border-color: #45624c; background: #223128; }
+.integration-steps { margin-top: 12px; }
+.integration-steps p { display: flex; align-items: flex-start; gap: 9px; color: #bac4c9; font-size: 11px; margin: 8px 0; }
+.setup-number { flex-shrink: 0; width: 17px; height: 17px; display: inline-grid; place-items: center; border: 1px solid #56514a; border-radius: 50%; color: #d4b397; font-size: 9px; }
+.integration-steps .text-button { margin-left: auto; color: var(--orange); white-space: nowrap; font-size: 10px; }
+.integration-examples { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 11px; }
+.integration-examples summary { cursor: pointer; font-size: 11px; color: #c5cdd1; }
+.integration-examples summary:focus-visible { outline: 2px solid var(--orange); outline-offset: 4px; }
+.integration-examples summary span { color: #84969e; font-family: var(--mono); margin-left: 9px; font-size: 9px; }
+.integration-example-content { padding-top: 13px; }
+.example-controls { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 10px; }
+.example-controls label { font-size: 10px; color: #a6b6be; display: flex; align-items: center; gap: 8px; flex: 1; }
+.example-controls input { width: 100%; max-width: 270px; font-family: var(--mono); font-size: 11px; padding: 7px 9px; }
+.example-controls .segmented { flex-shrink: 0; }
+.integration-example-content pre { min-height: 0; max-height: 230px; background: #101618; border: 1px solid #35454d; border-radius: 6px; padding: 12px; font-size: 11px; }
+.integration-help, .persistence-note { font-size: 10px; color: #8da1ac; margin: 10px 0 0; line-height: 1.7; }
+.persistence-note { font-size: 9px; }
+@media (max-width: 750px) {
+  .integration-panel { padding: 16px; }
+  .integration-heading { gap: 12px; flex-direction: column; }
+  .integration-heading p, .integration-steps p { font-size: 10px; }
+  .integration-steps p { flex-wrap: wrap; }
+  .integration-steps p > span:last-of-type { flex: 1; min-width: 180px; }
+  .example-controls { flex-wrap: wrap; gap: 9px; }
+  .example-controls label { flex-basis: 100%; }
+  .example-controls input { max-width: none; }
+  .example-controls .button { margin-left: auto; }
+  .integration-example-content pre { font-size: 10px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *:before,

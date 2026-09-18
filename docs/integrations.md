@@ -1,10 +1,10 @@
 # Use FaultDeck with a real client
 
-These examples connect an application to the proxy on port **7332**. The control panel uses **7331**; it is not the API endpoint for your application. Everything below is for local development.
+These examples connect an application to the proxy on port **7332**. The control panel uses **7331**; it is not the API endpoint for your application. Use a local or self-hosted development instance; these examples are not for production traffic.
 
 ## Node.js: automatically fail twice, then recover
 
-The [retry client on GitHub main](https://github.com/ogrtdtghkhan-afk/faultdeck/blob/main/examples/clients/retry.mjs) requires Node.js 22 or later and has no package dependencies. It was added after v0.1.0: the currently published v0.1.0 archives contain the scenario, but **do not contain this client**. Use a current source checkout as recommended below, or follow the archive instructions to save the script separately.
+The [retry client](https://github.com/ogrtdtghkhan-afk/faultdeck/blob/main/examples/clients/retry.mjs) requires Node.js 22 or later and has no package dependencies. It is included in the v0.2.0 release archives and the source checkout.
 
 ### Recommended: run from the main checkout
 
@@ -36,13 +36,11 @@ Success after 3 attempts.
 
 Open `http://127.0.0.1:7331` to see the three requests. Each run uses the scenario's shared counters: playground requests and other clients can consume its two injected failures first. For the same sequence again, restart FaultDeck with the scenario or deliberately use **Reset** in the control panel. The example never imports scenarios, changes rules, or calls the control API.
 
-### Alternative: use the published v0.1.0 binary
+### Alternative: use the v0.2.0 binary
 
 This option needs Node.js but does not need Go.
 
-1. Extract the v0.1.0 archive and enter its `faultdeck_<version>_<os>_<arch>` directory, which contains the executable and `examples/fail-twice.json`.
-2. Create a `clients` folder inside `examples`.
-3. Open the [raw retry.mjs from main](https://raw.githubusercontent.com/ogrtdtghkhan-afk/faultdeck/main/examples/clients/retry.mjs) and save it as `examples/clients/retry.mjs` inside that extracted directory. Save the raw JavaScript, and make sure your browser does not add a `.txt` extension.
+Extract the v0.2.0 archive and enter its `faultdeck_<version>_<os>_<arch>` directory. It contains the executable, `examples/fail-twice.json`, and `examples/clients/retry.mjs`.
 
 In terminal one, from the extracted directory:
 
@@ -56,7 +54,7 @@ In terminal one, from the extracted directory:
 .\faultdeck.exe --scenario examples/fail-twice.json
 ```
 
-In terminal two, from the same extracted directory, run `node examples/clients/retry.mjs`. The expected output is the same sequence shown above. The separately downloaded script is from main, not part of the original v0.1.0 archive.
+In terminal two, from the same extracted directory, run `node examples/clients/retry.mjs`. The expected output is the same sequence shown above. Older v0.1.0 archives do not include the client; upgrade or use the current source checkout.
 
 ### Retry policy and limits
 
@@ -74,7 +72,27 @@ To use a different proxy port, pass its origin explicitly:
 node examples/clients/retry.mjs --target http://127.0.0.1:17332
 ```
 
-`--target` accepts an HTTP(S) origin without credentials, an endpoint path, a query, or a fragment; the request path remains `/api/orders`. The default is `http://127.0.0.1:7332`. Point it only at a development service you intend to call. No bearer tokens or API keys are supplied.
+`--target` accepts an HTTP(S) origin without credentials, an endpoint path, a query, or a fragment; the request path remains `/api/orders`. The default is `http://127.0.0.1:7332`. Point it only at a development service you intend to call. The client does not supply upstream bearer tokens or API keys. Optional FaultDeck proxy authentication uses a separate header, described below.
+
+### Connect to a proxy that requires a token
+
+The current client optionally reads `FAULTDECK_PROXY_TOKEN` from its environment and sends it as `X-FaultDeck-Token` on each request. It never places the token in the URL, prints it, or uses the application's `Authorization` header for proxy authentication. With the variable unset or empty, no proxy token header is sent, so the local unauthenticated demo and v0.1.0 still work.
+
+For the Docker deployment, leaving the server's `FAULTDECK_PROXY_TOKEN` empty makes its proxy token equal to `FAULTDECK_ADMIN_PASSWORD`. The client does not read the admin password automatically: in that configuration, its `FAULTDECK_PROXY_TOKEN` must contain that same password. Prefer setting a **separate random proxy token** on the server and client so client access does not also grant control-panel access.
+
+When running the client from the deployment checkout, put that separate token in the ignored `.env` file along with the deployment settings, then use Node.js 22 or later's environment-file support:
+
+```sh
+node --env-file=.env examples/clients/retry.mjs
+```
+
+For a different host or published port, keep the token in the environment and pass only the origin:
+
+```sh
+node --env-file=.env examples/clients/retry.mjs --target https://faultdeck-api.example.test
+```
+
+Use the proxy's HTTPS origin when connecting across machines. This client does not disable TLS certificate verification. A missing or wrong token returns 401 and stops immediately under the existing retry policy; it is not retried. The example still only requests `/api/orders` and never calls the control API.
 
 From a current main checkout, run the local mock-server tests with:
 
@@ -82,7 +100,7 @@ From a current main checkout, run the local mock-server tests with:
 node --test examples/clients/retry.test.mjs
 ```
 
-The tests use temporary loopback ports. They cover successful recovery, the three-attempt cap and exit code, rate-limit timing decisions, non-retryable responses, redirects, timeout, and target validation. The archive instructions above download only the client; the test file is available in the main checkout.
+The tests use temporary loopback ports. They cover successful recovery with and without a proxy token, environment-variable authentication against a real mock HTTP server, credential-free logs and URLs, the three-attempt cap and exit code, rate-limit timing decisions, non-retryable responses, redirects, timeout, and target validation.
 
 ## Vite: keep browser API requests on the same origin
 
@@ -126,8 +144,10 @@ Keep this routing in the **development server only**. Do not point a production 
 
 ## 中文速览
 
-**当前 v0.1.0 压缩包尚未包含这个客户端。** 推荐克隆 main，在仓库根目录运行 `go run ./cmd/faultdeck --scenario examples/fail-twice.json`，再在同一目录打开第二个终端，运行 `node examples/clients/retry.mjs`。使用 v0.1.0 二进制包时，先按上文把原始脚本另存到解压目录的 `examples/clients/retry.mjs`，再用该目录中的 `./faultdeck` 或 `.\faultdeck.exe` 加载场景。
+**v0.2.0 压缩包已经包含客户端和场景。** 解压后进入可执行文件所在目录，运行 `./faultdeck --scenario examples/fail-twice.json`（Windows 使用 `.\faultdeck.exe`），再打开第二个终端运行 `node examples/clients/retry.mjs`。也可以克隆源码，用 `go run ./cmd/faultdeck --scenario examples/fail-twice.json` 启动。旧版 v0.1.0 不含客户端，建议升级。
 
 客户端会自动请求三次，得到 **503、503、200**。它只重试 429/503，最多三次，不会修改任何故障规则。重新演示前重启场景或在控制台手动 Reset，避免旧计数影响结果。
+
+连接需要认证的部署实例时，为客户端设置 `FAULTDECK_PROXY_TOKEN`；脚本只通过 `X-FaultDeck-Token` 请求头发送，不写进 URL、不打印，也不占用业务接口的 `Authorization`。Docker 服务端未设置独立 token 时，代理 token 默认等于管理员密码；建议给服务端和客户端配置相同的独立随机 token。使用部署目录的 `.env` 时，可运行 `node --env-file=.env examples/clients/retry.mjs`。未设置 token 的本地演示仍可使用；token 错误导致 401，会立即停止。
 
 Vite 项目在开发配置中把 `/api` 代理到 `http://127.0.0.1:7332`，前端继续调用 `fetch("/api/orders")`，即可通过同源请求观察错误响应。**7331 是控制面板，7332 才是业务请求代理。** 这套配置只用于本地开发，不能用于生产流量。

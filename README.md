@@ -2,11 +2,11 @@
 
 **Break it here. Ship it stronger.**
 
-A local HTTP proxy with a control panel for slow responses, errors, timeouts, and dropped connections. Point your app at FaultDeck, choose a fault, and see whether recovery actually works.
+An HTTP proxy with a control panel for slow responses, errors, timeouts, and dropped connections. Run it locally or deploy an authenticated service with saved rules. Point your app at FaultDeck, choose a fault, and see whether recovery actually works.
 
 [中文文档](README.zh-CN.md) · [Download](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) · [Report an issue](https://github.com/ogrtdtghkhan-afk/faultdeck/issues)
 
-[Try the interactive overview](https://ogrtdtghkhan-afk.github.io/faultdeck/) — a browser simulation of “fail twice, then recover.” Download the tool to inject faults into real requests.
+[Deploy the working service](docs/deployment.md) · [Interactive overview](https://ogrtdtghkhan-afk.github.io/faultdeck/) (browser simulation)
 
 [![CI](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml)
 
@@ -26,7 +26,28 @@ Your app ──► localhost:7332 ──► Your backend
 
 ![FaultDeck after two injected failures: the rule is complete and the next request returns 200.](docs/assets/fail-twice.png)
 
-## Try it in three minutes
+## Deploy with Docker
+
+Deploy the real control panel and proxy with authentication and saved rules:
+
+```sh
+git clone https://github.com/ogrtdtghkhan-afk/faultdeck.git
+cd faultdeck
+cp .env.example .env
+```
+
+In PowerShell, use `Copy-Item .env.example .env`. Set `FAULTDECK_ADMIN_PASSWORD` in `.env` to your own random password of at least 12 characters, then run:
+
+```sh
+docker compose up --build -d
+docker compose ps
+```
+
+When healthy, open **http://127.0.0.1:7331** and sign in as `admin` with that password. Set your real upstream in the UI. Applications call **http://127.0.0.1:7332** with `X-FaultDeck-Token` (the admin password unless a separate token is configured). Rules and configuration survive container replacement through the named data volume.
+
+See the [deployment guide](docs/deployment.md) for host/container networking, remote access, credentials, persistence, and the real container acceptance test. Use the current source checkout; the older v0.1.0 archive does not contain this deployment setup.
+
+## Try the local executable
 
 Download and extract the archive for your platform from [Releases](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest). Open a terminal inside the extracted `faultdeck_<version>_<os>_<arch>` folder (the folder containing the executable), then run:
 
@@ -40,13 +61,13 @@ Download and extract the archive for your platform from [Releases](https://githu
 .\faultdeck.exe
 ```
 
-Open **http://127.0.0.1:7331**. With no target configured, FaultDeck starts its demo API automatically.
+Open **http://127.0.0.1:7331**. On a fresh workspace with no target configured, FaultDeck uses its built-in demo API. Subsequent runs restore the saved target and rules from `./data`.
 
 1. Send a request to `/api/orders` in the playground: it succeeds.
 2. Add the **Fail twice** preset and send the request three times.
 3. Inspect the activity: `503`, `503`, then the real upstream response.
 
-The playground sends real requests to the configured target. The built-in demo is the place to try the presets first. After downloading, the demo works offline.
+The playground sends real requests to the configured target. The built-in demo is the place to try the presets first. After downloading, the demo works offline. Native execution defaults to loopback access; authentication can be enabled with the environment variables below. Use the Docker instructions for a deployed service.
 
 ### Run from source
 
@@ -66,13 +87,13 @@ If your backend listens on port 8000:
 ./faultdeck --target http://127.0.0.1:8000
 ```
 
-Set your application's development API base URL to `http://127.0.0.1:7332`. Open the control panel, create a rule for the endpoint you want to test, and exercise your application normally.
+Set your application's development API base URL to `http://127.0.0.1:7332`. When proxy authentication is enabled, include `X-FaultDeck-Token` with the configured token; business `Authorization` is preserved. Open the control panel, create a rule for the endpoint you want to test, and exercise your application normally.
 
 Want a complete example? Follow the [Node.js retry client and Vite integration guide](docs/integrations.md) to see automatic `503 → 503 → 200` recovery and connect a browser app through its development proxy.
 
 The target can be HTTP or HTTPS and may include a base path. The local proxy itself listens over HTTP. An HTTPS web page may therefore need your development server's own proxy to reach it without browser mixed-content restrictions. FaultDeck forwards upstream CORS behavior; it does not automatically make a cross-origin API accessible.
 
-All listeners bind to `127.0.0.1`. Keep your backend and FaultDeck on the same machine for this first version.
+Native control and proxy listeners default to `127.0.0.1`; `--listen` can change that. Remote binding requires authentication. The built-in demo remains on loopback. Docker publishes its control and proxy ports only on host loopback by default; see the [deployment guide](docs/deployment.md) for networking and remote access.
 
 ## Faults that mean what they say
 
@@ -133,22 +154,31 @@ Scenario files include their upstream URL and rule paths. Review them for privat
 
 | Flag | Default | Purpose |
 | --- | --- | --- |
-| `--target` | Built-in demo | Upstream HTTP(S) URL |
-| `--port` | `7332` | Local proxy port |
+| `--target` | Saved target, otherwise demo | Explicitly override the upstream HTTP(S) URL |
+| `--listen` | `127.0.0.1` | Control and proxy bind address |
+| `--port` | `7332` | Proxy port |
 | `--ui-port` | `7331` | Control panel port |
 | `--demo-port` | `7333` | Built-in demo port |
+| `--data-dir` | `./data` | Save configuration and rules; `--data-dir=` disables persistence |
+| `--ui-origin` | Local control origin | Advertised browser origin, including scheme and port |
+| `--proxy-url` | Local proxy origin | Advertised application proxy origin |
 | `--scenario` | None | Import a scenario JSON file on startup |
+| `--healthcheck` | — | Probe the internal control listener and exit 0/1 |
 | `--version` | — | Print the version and exit |
 
 `--target` and `--scenario` are mutually exclusive because the scenario includes its target. Use `--help` for the executable's flag reference. The [HTTP API contract](docs/api-contract.md) describes programmatic control.
 
-## Scope and local data
+Authentication uses environment variables: `FAULTDECK_ADMIN_USER` defaults to `admin`; `FAULTDECK_ADMIN_PASSWORD` enables Basic Auth and must be at least 12 characters; `FAULTDECK_PROXY_TOKEN` can supply a separate token of at least 12 characters and otherwise defaults to the admin password. Remote access requires an admin password. The supplied Compose deployment requires it even though the published host ports are local.
 
-FaultDeck v0.1 focuses on development-time HTTP request faults. SSE is passed through; individual event corruption or event-level delays are not implemented. WebSocket behavior is not guaranteed in v0.1. It is not a TCP traffic shaper, HTTPS interception proxy, or load-testing service.
+## Scope and stored data
+
+FaultDeck v0.2 supports native and container deployments for development/test HTTP request faults. SSE is passed through; individual event corruption or event-level delays are not implemented. WebSocket behavior is not guaranteed. It is not a TCP traffic shaper, HTTPS interception proxy, or load-testing service.
+
+The upstream, master switch, and rules are saved in the configured data directory. Native execution uses `./data`; Docker uses the `/data` volume. Runtime counters and activity are not saved and restart from zero after the service restarts.
 
 The last 200 requests are kept in memory as metadata only: method, path, status, duration, and fault details. Request/response bodies, headers, and query strings are not recorded in activity logs. The playground displays up to 64 KiB of the requested response. Paths may still contain sensitive identifiers.
 
-The control API requires same-origin requests and a custom header for mutations. There is no user authentication. Keep the control port local; do not expose it through a tunnel or public reverse proxy. For the trust boundary and reporting process, see [SECURITY.md](SECURITY.md).
+The control API checks the configured origin and requires `X-FaultDeck: 1` for mutations. With authentication enabled, the UI and control API require Basic Auth, and application requests require `X-FaultDeck-Token`; that token is stripped before forwarding. `/healthz` is the minimal unauthenticated health endpoint. Use the [deployment guide](docs/deployment.md) for SSH access or an authenticated HTTPS reverse proxy. For the trust boundary and reporting process, see [SECURITY.md](SECURITY.md).
 
 ## Develop
 

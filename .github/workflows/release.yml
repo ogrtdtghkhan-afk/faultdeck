@@ -15,9 +15,12 @@ jobs:
   verify:
     uses: ./.github/workflows/ci.yml
 
+  verify-deployment:
+    uses: ./.github/workflows/deployment.yml
+
   release:
     name: Build and publish archives
-    needs: verify
+    needs: [verify, verify-deployment]
     runs-on: ubuntu-latest
     permissions:
       contents: write

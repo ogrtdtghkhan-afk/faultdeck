@@ -8,14 +8,20 @@ import (
 	"unicode/utf8"
 )
 
-const Version = "0.1.0"
+const Version = "0.2.0"
 
 type Config struct {
-	Version  string
-	Upstream string
-	ProxyURL string
-	DemoURL  string
-	AdminURL string
+	Version          string
+	Upstream         string
+	ProxyURL         string
+	DemoURL          string
+	AdminURL         string
+	DataDir          string
+	InternalProxyURL string
+	InternalAdminURL string
+	AdminUser        string
+	AdminPassword    string
+	ProxyToken       string
 }
 
 type Rule struct {
@@ -62,15 +68,17 @@ type Stats struct {
 }
 
 type State struct {
-	Version   string `json:"version"`
-	ProxyURL  string `json:"proxyUrl"`
-	DemoURL   string `json:"demoUrl"`
-	Upstream  string `json:"upstream"`
-	Enabled   bool   `json:"enabled"`
-	StartedAt string `json:"startedAt"`
-	Rules     []Rule `json:"rules"`
-	Stats     Stats  `json:"stats"`
-	Logs      []Log  `json:"logs"`
+	Persistent bool   `json:"persistent"`
+	ProxyAuth  bool   `json:"proxyAuth"`
+	Version    string `json:"version"`
+	ProxyURL   string `json:"proxyUrl"`
+	DemoURL    string `json:"demoUrl"`
+	Upstream   string `json:"upstream"`
+	Enabled    bool   `json:"enabled"`
+	StartedAt  string `json:"startedAt"`
+	Rules      []Rule `json:"rules"`
+	Stats      Stats  `json:"stats"`
+	Logs       []Log  `json:"logs"`
 }
 
 func validateRule(r *Rule) error {
@@ -127,7 +135,7 @@ func (d *Deck) validateTarget(raw string) (*url.URL, error) {
 	host := strings.ToLower(strings.TrimSuffix(u.Hostname(), "."))
 	ip := net.ParseIP(host)
 	if host == "localhost" || (ip != nil && ip.IsLoopback()) {
-		for _, own := range []string{d.config.ProxyURL, d.config.AdminURL} {
+		for _, own := range []string{d.config.ProxyURL, d.config.AdminURL, d.config.InternalProxyURL, d.config.InternalAdminURL} {
 			v, _ := url.Parse(own)
 			if v != nil && effectivePort(u) == effectivePort(v) {
 				return nil, fmt.Errorf("target cannot point to FaultDeck's proxy or control port")

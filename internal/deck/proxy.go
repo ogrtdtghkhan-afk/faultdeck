@@ -48,6 +48,10 @@ func waitFor(ctx context.Context, ms int) bool {
 
 func (d *Deck) ProxyHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if d.config.ProxyToken != "" && !secretEqual(r.Header.Get("X-FaultDeck-Token"), d.config.ProxyToken) {
+			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "valid X-FaultDeck-Token header required"})
+			return
+		}
 		start := time.Now()
 		target, rule, epoch := d.selectRule(r.Method, r.URL.Path)
 		entry := Log{Time: start.UTC().Format(time.RFC3339Nano), Method: r.Method, Path: r.URL.Path}
@@ -107,6 +111,7 @@ func (d *Deck) ProxyHandler() http.Handler {
 			Rewrite: func(pr *httputil.ProxyRequest) {
 				pr.SetURL(target)
 				pr.Out.Host = target.Host
+				pr.Out.Header.Del("X-FaultDeck-Token")
 				pr.Out.Header.Set("X-FaultDeck-Hop", "1")
 			},
 			Transport:     d.transport,
