@@ -25,8 +25,8 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-      - name: Test retry client
-        run: node --test examples/clients/retry.test.mjs
+      - name: Test retry client and generated UI snippets
+        run: node --test examples/clients/retry.test.mjs scripts/ui-snippets.test.mjs
 
   test:
     name: Go ${{ matrix.go }} / ${{ matrix.os }}

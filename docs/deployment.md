@@ -41,6 +41,8 @@ Inside the FaultDeck container, `127.0.0.1` refers to that container. It does no
 
 Each application request to port 7332 needs **`X-FaultDeck-Token`**. This credential is removed before forwarding. Your application's existing **`Authorization`** header remains available to the backend.
 
+Send the proxy token only to FaultDeck. Disable automatic redirect following in clients that would retain this custom header: an upstream redirect can otherwise send it to a different server. Use `redirect: "manual"` with Node.js `fetch`; the included retry client already rejects redirects. A separate proxy token keeps client credentials distinct from the administrator password.
+
 For a Bash terminal, enter the proxy token at the prompt below (use the admin password if you left the separate token empty):
 
 ```sh
@@ -54,7 +56,7 @@ PowerShell equivalent:
 
 ```powershell
 $credential = [System.Net.NetworkCredential]::new('', (Read-Host 'Proxy token' -AsSecureString))
-Invoke-WebRequest http://127.0.0.1:7332/api/orders -Headers @{'X-FaultDeck-Token' = $credential.Password}
+Invoke-WebRequest http://127.0.0.1:7332/api/orders -MaximumRedirection 0 -Headers @{'X-FaultDeck-Token' = $credential.Password}
 Remove-Variable credential
 ```
 

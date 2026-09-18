@@ -148,6 +148,6 @@ Keep this routing in the **development server only**. Do not point a production 
 
 客户端会自动请求三次，得到 **503、503、200**。它只重试 429/503，最多三次，不会修改任何故障规则。重新演示前重启场景或在控制台手动 Reset，避免旧计数影响结果。
 
-连接需要认证的部署实例时，为客户端设置 `FAULTDECK_PROXY_TOKEN`；脚本只通过 `X-FaultDeck-Token` 请求头发送，不写进 URL、不打印，也不占用业务接口的 `Authorization`。Docker 服务端未设置独立 token 时，代理 token 默认等于管理员密码；建议给服务端和客户端配置相同的独立随机 token。使用部署目录的 `.env` 时，可运行 `node --env-file=.env examples/clients/retry.mjs`。未设置 token 的本地演示仍可使用；token 错误导致 401，会立即停止。
+连接需要认证的部署实例时，为客户端设置 `FAULTDECK_PROXY_TOKEN`；脚本只通过 `X-FaultDeck-Token` 请求头发送，不写进 URL、不打印，也不占用业务接口的 `Authorization`。Docker 服务端未设置独立 token 时，客户端的 `FAULTDECK_PROXY_TOKEN` 需要填写管理员密码，脚本不会自动读取管理员密码。建议在部署的 `.env` 中填写独立随机 token，重建服务使其生效，再运行 `node --env-file=.env examples/clients/retry.mjs`。未设置 token 的本地演示仍可使用；token 错误导致 401，会立即停止。
 
 Vite 项目在开发配置中把 `/api` 代理到 `http://127.0.0.1:7332`，前端继续调用 `fetch("/api/orders")`，即可通过同源请求观察错误响应。**7331 是控制面板，7332 才是业务请求代理。** 这套配置只用于本地开发，不能用于生产流量。

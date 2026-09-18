@@ -41,6 +41,8 @@ docker compose ps
 
 应用发往 7332 端口的每个请求需要携带 **`X-FaultDeck-Token`**。该令牌在转发前会移除，业务自身的 **`Authorization`** 请求头会保留给真实后端。
 
+代理令牌只能发送给 FaultDeck。请关闭会保留该自定义请求头的客户端自动重定向，避免后端的跳转响应把令牌带到其他服务器。Node.js `fetch` 使用 `redirect: "manual"`；附带的重试客户端已经拒绝跟随重定向。建议设置独立代理令牌，将客户端凭据与管理员密码分开。
+
 Bash 示例：在提示处输入代理令牌；如果没有设置独立令牌，则输入管理员密码。
 
 ```sh
@@ -54,7 +56,7 @@ PowerShell 示例：
 
 ```powershell
 $credential = [System.Net.NetworkCredential]::new('', (Read-Host 'Proxy token' -AsSecureString))
-Invoke-WebRequest http://127.0.0.1:7332/api/orders -Headers @{'X-FaultDeck-Token' = $credential.Password}
+Invoke-WebRequest http://127.0.0.1:7332/api/orders -MaximumRedirection 0 -Headers @{'X-FaultDeck-Token' = $credential.Password}
 Remove-Variable credential
 ```
 

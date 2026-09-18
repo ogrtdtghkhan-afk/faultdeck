@@ -125,8 +125,8 @@
         ? 'const token = process.env.FAULTDECK_PROXY_TOKEN;\nif (!token) throw new Error("Set FAULTDECK_PROXY_TOKEN from deployment config");\n\n'
         : "";
       const options = state.proxyAuth
-        ? ', {\n  headers: { "X-FaultDeck-Token": token },\n}'
-        : "";
+        ? ', {\n  redirect: "manual",\n  headers: { "X-FaultDeck-Token": token },\n}'
+        : ', { redirect: "manual" }';
       example = `${authSetup}const response = await fetch(${JSON.stringify(url)}${options});\nconsole.log(response.status, await response.text());`;
     } else {
       const auth = state.proxyAuth
@@ -141,8 +141,8 @@
       lastExample = example;
     }
     elements["integration-auth-help"].textContent = state.proxyAuth
-      ? "Replace the curl token placeholder, or set FAULTDECK_PROXY_TOKEN in your Node.js process. Use your configured proxy token; if none was set, use the admin password. Keep this value in server-side configuration. curl examples use POSIX shell quoting."
-      : "Replace /your-endpoint with an existing backend route. Node.js examples run server-side with built-in fetch. curl examples use POSIX shell quoting. No proxy token is required by this instance.";
+      ? "Replace the curl token placeholder, or set FAULTDECK_PROXY_TOKEN in your Node.js process. Use your configured proxy token; if none was set, use the admin password. Keep this value in server-side configuration. Examples return redirects without following them, so the token is not sent to another origin. curl examples use POSIX shell quoting."
+      : "Replace /your-endpoint with an existing backend route. Node.js examples run server-side with built-in fetch and return redirects without following them. curl examples use POSIX shell quoting. No proxy token is required by this instance.";
   }
 
   function updateState(next) {
