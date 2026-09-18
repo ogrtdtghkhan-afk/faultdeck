@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#111415" />
+    <meta
+      name="description"
+      content="Break it here. Ship it stronger. FaultDeck is a free, open-source local API proxy for delays, errors, timeouts, and dropped connections. Try the interactive recovery demo."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="FaultDeck — Break it here. Ship it stronger."
+    />
+    <meta
+      property="og:description"
+      content="Test what happens when your API fails. A local failure lab with a control panel, repeatable scenarios, and no account required."
+    />
+    <meta
+      property="og:url"
+      content="https://ogrtdtghkhan-afk.github.io/faultdeck/"
+    />
+    <meta
+      property="og:image"
+      content="https://ogrtdtghkhan-afk.github.io/faultdeck/assets/fail-twice.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="FaultDeck dashboard showing two injected failures followed by a successful 200 response."
+    />
+    <meta property="og:image:width" content="1265" />
+    <meta property="og:image:height" content="712" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link
+      rel="canonical"
+      href="https://ogrtdtghkhan-afk.github.io/faultdeck/"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23fa8556'/%3E%3Cpath d='M9 7h16l-3 6h-7v4h7l-3 5h-4v5H9z' fill='%23111415'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./app.js" defer></script>
+    <title>FaultDeck — Break it here. Ship it stronger.</title>
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="./" aria-label="FaultDeck home"
+          ><span class="brand-mark" aria-hidden="true"
+            ><svg viewBox="0 0 32 32">
+              <path d="M9 7h16l-3 6h-7v4h7l-3 5h-4v5H9z" /></svg></span
+          >FaultDeck</a
+        >
+        <nav aria-label="Main navigation">
+          <a
+            class="nav-link"
+            href="https://github.com/ogrtdtghkhan-afk/faultdeck#readme"
+            data-i18n="docs"
+            >Docs</a
+          >
+          <a
+            class="nav-link source-link"
+            href="https://github.com/ogrtdtghkhan-afk/faultdeck"
+            ><svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 7 3 12l5 5m8-10 5 5-5 5m-3-14-2 18" /></svg
+            ><span data-i18n="source">Source</span></a
+          >
+          <span class="nav-divider" aria-hidden="true"></span>
+          <button
+            id="language-toggle"
+            class="language-toggle"
+            type="button"
+            aria-label="Switch to Chinese"
+          >
+            中文
+          </button>
+        </nav>
+      </header>
+
+      <main id="main">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-copy">
+            <span class="eyebrow"
+              ><span aria-hidden="true">+</span>
+              <span data-i18n="eyebrow">YOUR LOCAL FAILURE LAB</span></span
+            >
+            <h1 id="hero-title">
+              <span data-i18n="heroLineOne">Break it here.</span><br /><span
+                class="accent"
+                data-i18n="heroLineTwo"
+                >Ship it stronger.</span
+              >
+            </h1>
+            <p class="hero-description" data-i18n="heroDescription">
+              Slow responses. Failed requests. Dropped connections. Make them
+              happen on purpose—and see how your app recovers.
+            </p>
+            <div class="hero-actions">
+              <a
+                class="button button-primary"
+                href="https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest"
+                ><svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M10 2v11m-4-4 4 4 4-4M3 13v4h14v-4" /></svg
+                ><span data-i18n="download">Download FaultDeck</span></a
+              ><a class="button button-quiet" href="#quick-start"
+                ><span data-i18n="quickStartLink">Get started</span
+                ><span aria-hidden="true">↗</span></a
+              >
+            </div>
+            <p class="hero-note" data-i18n="heroNote">
+              Free & open source · Windows, macOS & Linux
+            </p>
+            <div class="trust-line">
+              <span class="green-dot" aria-hidden="true"></span
+              ><span data-i18n="trustLine"
+                >Runs on your machine. No account. No cloud.</span
+              >
+            </div>
+          </div>
+
+          <section class="demo-card" aria-labelledby="demo-title">
+            <div class="demo-heading">
+              <div>
+                <span class="small-label" data-i18n="interactiveDemo"
+                  >INTERACTIVE DEMO</span
+                >
+                <h2 id="demo-title" data-i18n="demoTitle">
+                  Fail twice. Then recover.
+                </h2>
+              </div>
+              <span class="simulation-label" data-i18n="simulation"
+                >SIMULATION</span
+              >
+            </div>
+            <div class="demo-content">
+              <div class="request-bar">
+                <span class="method">GET</span><code>/api/orders</code
+                ><span class="request-target" data-i18n="sampleApi"
+                  >sample API</span
+                >
+              </div>
+              <div class="scenario-line">
+                <span class="scenario-icon" aria-hidden="true">ϟ</span
+                ><span data-i18n="scenarioRule"
+                  >Return 503 for the first 2 requests</span
+                ><span class="rule-limit">LIMIT 2</span>
+              </div>
+              <ol class="request-trace" aria-label="Simulated request results">
+                <li class="trace-row" data-step="1">
+                  <span class="trace-number">01</span
+                  ><span class="trace-copy"
+                    ><strong data-i18n="requestOne">First request</strong
+                    ><span class="trace-detail" data-i18n="waiting"
+                      >Waiting for you</span
+                    ></span
+                  ><span class="trace-status">—</span>
+                </li>
+                <li class="trace-row" data-step="2">
+                  <span class="trace-number">02</span
+                  ><span class="trace-copy"
+                    ><strong data-i18n="requestTwo">Second request</strong
+                    ><span class="trace-detail" data-i18n="waiting"
+                      >Waiting for you</span
+                    ></span
+                  ><span class="trace-status">—</span>
+                </li>
+                <li class="trace-row" data-step="3">
+                  <span class="trace-number">03</span
+                  ><span class="trace-copy"
+                    ><strong data-i18n="requestThree">Third request</strong
+                    ><span class="trace-detail" data-i18n="waiting"
+                      >Waiting for you</span
+                    ></span
+                  ><span class="trace-status">—</span>
+                </li>
+              </ol>
+              <div class="demo-controls">
+                <button
+                  id="send-request"
+                  class="button button-primary"
+                  type="button"
+                >
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="m6 3 10 7-10 7z" /></svg
+                  ><span id="send-label">Send request 1</span></button
+                ><button
+                  id="reset-demo"
+                  class="reset-button"
+                  type="button"
+                  disabled
+                >
+                  <span aria-hidden="true">↺</span>
+                  <span data-i18n="reset">Reset</span>
+                </button>
+              </div>
+              <p
+                class="demo-progress"
+                id="demo-progress"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                Click to send the first simulated request.
+              </p>
+            </div>
+            <p class="demo-disclaimer">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="10" r="7" />
+                <path d="M10 9v5m0-8h.01" /></svg
+              ><span data-i18n="simulationNote"
+                >Browser simulation only. No API requests are sent.</span
+              >
+            </p>
+            <noscript
+              ><p class="noscript-note">
+                Enable JavaScript to try the simulation. Expected responses:
+                503, 503, 200. Download FaultDeck to test real requests.
+              </p></noscript
+            >
+          </section>
+        </section>
+
+        <section class="fault-types" aria-label="Supported failures">
+          <article>
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="13" r="8" />
+                <path d="M12 9v4l3 2M9 2h6" />
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="latencyTitle">Slow it down</h2>
+              <p data-i18n="latencyDescription">
+                Check loading states and client timeouts.
+              </p>
+            </div>
+            <span class="feature-code">+1500ms</span>
+          </article>
+          <article>
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path d="m12 3 10 17H2L12 3zM12 9v5m0 3h.01" />
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="errorTitle">Make it fail</h2>
+              <p data-i18n="errorDescription">
+                Exercise rate limits, errors, and retries.
+              </p>
+            </div>
+            <span class="feature-code">429 / 503</span>
+          </article>
+          <article>
+            <div class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="m3 3 18 18M8 8l-4 4 4 4 4-4m1 1 3 3 4-4-3-3M5 15l-3 3m17-12 3-3"
+                />
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="disconnectTitle">Cut the connection</h2>
+              <p data-i18n="disconnectDescription">
+                See what happens when no response arrives.
+              </p>
+            </div>
+            <span class="feature-code">×</span>
+          </article>
+        </section>
+
+        <section class="dashboard-section" aria-labelledby="dashboard-title">
+          <div class="section-intro">
+            <div>
+              <span class="eyebrow" data-i18n="dashboardEyebrow"
+                >THE REAL THING</span
+              >
+              <h2 id="dashboard-title" data-i18n="dashboardTitle">
+                A control panel for the unexpected.
+              </h2>
+            </div>
+            <p data-i18n="dashboardDescription">
+              Choose a fault, send a request, and see exactly which rule fired.
+              Save the scenario to run it again.
+            </p>
+          </div>
+          <figure class="dashboard-figure">
+            <div class="window-bar">
+              <span class="window-dots" aria-hidden="true"
+                ><i></i><i></i><i></i></span
+              ><code>127.0.0.1:7331</code
+              ><span class="window-badge" data-i18n="localDashboard"
+                >LOCAL DASHBOARD</span
+              >
+            </div>
+            <img
+              src="./assets/fail-twice.png"
+              width="1265"
+              height="712"
+              alt="FaultDeck dashboard after two injected 503 failures. The rule has reached its limit and the next request returns 200."
+              loading="lazy"
+              decoding="async"
+              id="dashboard-image"
+            />
+            <figcaption>
+              <span class="green-dot" aria-hidden="true"></span
+              ><span data-i18n="screenshotCaption"
+                >Actual FaultDeck dashboard. Two injected failures, followed by
+                a successful response.</span
+              >
+            </figcaption>
+          </figure>
+        </section>
+
+        <section
+          class="quick-start"
+          id="quick-start"
+          aria-labelledby="quick-start-title"
+        >
+          <div class="section-intro">
+            <div>
+              <span class="eyebrow" data-i18n="quickStartEyebrow"
+                >YOUR FIRST FAILURE, IN MINUTES</span
+              >
+              <h2 id="quick-start-title" data-i18n="quickStartTitle">
+                Bring your app. Or try ours.
+              </h2>
+            </div>
+            <p data-i18n="quickStartDescription">
+              A demo API is included. Start testing without an API key, a
+              dataset, or your own backend.
+            </p>
+          </div>
+          <div class="steps-grid">
+            <article class="step">
+              <span class="step-number">01 /</span>
+              <h3 data-i18n="stepOneTitle">Download & start</h3>
+              <p data-i18n="stepOneDescription">
+                Extract the release for your system. Open a terminal in that
+                folder and run:
+              </p>
+              <div class="commands">
+                <div><span>macOS / Linux</span><code>./faultdeck</code></div>
+                <div><span>Windows</span><code>.\faultdeck.exe</code></div>
+              </div>
+              <a
+                href="https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest"
+                class="inline-link"
+                ><span data-i18n="chooseDownload">Choose your download</span>
+                <span aria-hidden="true">↗</span></a
+              >
+            </article>
+            <article class="step">
+              <span class="step-number">02 /</span>
+              <h3 data-i18n="stepTwoTitle">Open the control panel</h3>
+              <p data-i18n="stepTwoDescription">
+                Visit this local address in your browser. The built-in demo is
+                already connected.
+              </p>
+              <code class="address-code">http://127.0.0.1:7331</code>
+              <p class="step-aside" data-i18n="stepTwoAside">
+                Ready for your app? Set your backend as the target and use port
+                7332 as your app’s API address.
+              </p>
+            </article>
+            <article class="step">
+              <span class="step-number">03 /</span>
+              <h3 data-i18n="stepThreeTitle">Fail twice. Check recovery.</h3>
+              <p data-i18n="stepThreeDescription">
+                Choose the “Fail twice” preset. Send three requests to
+                /api/orders in the playground.
+              </p>
+              <div
+                class="result-sequence"
+                aria-label="Expected demo statuses: 503, 503, 200"
+              >
+                <span>503</span><i aria-hidden="true">→</i><span>503</span
+                ><i aria-hidden="true">→</i><span class="success">200</span>
+              </div>
+              <p class="step-aside" data-i18n="stepThreeAside">
+                Now those are real requests. Check the activity log to see what
+                happened.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section class="closing-section" aria-labelledby="closing-title">
+          <div>
+            <span class="eyebrow" data-i18n="closingEyebrow"
+              >BUILT FOR THE UNHAPPY PATH</span
+            >
+            <h2 id="closing-title" data-i18n="closingTitle">
+              Find the failure before your users do.
+            </h2>
+            <p data-i18n="closingDescription">
+              Try a scenario. Tell us what broke. Help shape a better
+              development tool.
+            </p>
+          </div>
+          <div class="closing-actions">
+            <a
+              class="button button-primary"
+              href="https://github.com/ogrtdtghkhan-afk/faultdeck"
+              ><span data-i18n="viewGitHub">View on GitHub</span
+              ><span aria-hidden="true">↗</span></a
+            ><a
+              class="inline-link"
+              href="https://github.com/ogrtdtghkhan-afk/faultdeck/issues"
+              data-i18n="feedback"
+              >Share feedback or an idea</a
+            >
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span
+          ><span class="footer-mark" aria-hidden="true">ϟ</span> FaultDeck
+          <span class="footer-divider">/</span>
+          <span data-i18n="footerTagline"
+            >Small failures. Stronger software.</span
+          ></span
+        >
+        <div>
+          <a
+            href="https://github.com/ogrtdtghkhan-afk/faultdeck/blob/main/LICENSE"
+            data-i18n="license"
+            >MIT license</a
+          ><span aria-hidden="true">·</span
+          ><span data-i18n="privacy">No analytics. No cookies.</span>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

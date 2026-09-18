@@ -6,6 +6,8 @@
 
 [English](README.md) · [下载](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) · [反馈问题](https://github.com/ogrtdtghkhan-afk/faultdeck/issues)
 
+[打开交互演示页](https://ogrtdtghkhan-afk.github.io/faultdeck/)：先在浏览器里模拟“失败两次后恢复”；下载工具后即可对真实请求注入故障。
+
 [![CI](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml)
 
 ```text
@@ -25,6 +27,8 @@
 ![真实演示：注入两次故障后规则完成，下一次请求恢复 200。](docs/assets/fail-twice.png)
 
 ## 三分钟上手
+
+想直接验证客户端重试？查看 [Node.js 自动重试和 Vite 接入示例](docs/integrations.md)，运行真实的 **503 → 503 → 200** 恢复流程。
 
 从 [Releases](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) 下载适合你的系统和架构的压缩包并解压。在解压得到的 `faultdeck_<版本>_<系统>_<架构>` 文件夹中打开终端（确认当前文件夹包含可执行文件），然后运行：
 

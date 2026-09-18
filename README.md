@@ -6,6 +6,8 @@ A local HTTP proxy with a control panel for slow responses, errors, timeouts, an
 
 [中文文档](README.zh-CN.md) · [Download](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) · [Report an issue](https://github.com/ogrtdtghkhan-afk/faultdeck/issues)
 
+[Try the interactive overview](https://ogrtdtghkhan-afk.github.io/faultdeck/) — a browser simulation of “fail twice, then recover.” Download the tool to inject faults into real requests.
+
 [![CI](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml)
 
 ```text
@@ -65,6 +67,8 @@ If your backend listens on port 8000:
 ```
 
 Set your application's development API base URL to `http://127.0.0.1:7332`. Open the control panel, create a rule for the endpoint you want to test, and exercise your application normally.
+
+Want a complete example? Follow the [Node.js retry client and Vite integration guide](docs/integrations.md) to see automatic `503 → 503 → 200` recovery and connect a browser app through its development proxy.
 
 The target can be HTTP or HTTPS and may include a base path. The local proxy itself listens over HTTP. An HTTPS web page may therefore need your development server's own proxy to reach it without browser mixed-content restrictions. FaultDeck forwards upstream CORS behavior; it does not automatically make a cross-origin API accessible.
 

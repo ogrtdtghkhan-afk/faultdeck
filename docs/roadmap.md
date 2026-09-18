@@ -10,12 +10,14 @@ FaultDeck helps developers reproduce HTTP failures locally while checking loadin
 - In-memory request metadata, a GET/HEAD playground, reset, and JSON scenarios.
 - A built-in demo API and five examples that work without external services or datasets.
 
+The main branch also includes a [Node.js retry client and Vite development-proxy guide](integrations.md), plus a [browser simulation](https://ogrtdtghkhan-afk.github.io/faultdeck/). The client was added after the v0.1.0 archives; see the guide for both installation paths.
+
 SSE is passed through. Event-level stream faults and guaranteed WebSocket support are outside the current scope. Activity does not capture bodies, headers, or query strings.
 
 ## Next priorities
 
 1. **Dependable first use.** Address confirmed startup, scenario, port-conflict, or platform defects. Improve troubleshooting from actual reports.
-2. **Clear integration examples.** Document a browser development-proxy setup and a backend client with explicit retry behavior.
+2. **Clear integration examples.** Improve the existing client and browser development-proxy guide from installation and integration feedback.
 3. **Reproducible requests.** Consider a “Copy curl” action for playground GET/HEAD requests, with clear target/path handling.
 4. **Reusable scenarios.** Consider a deliberate CLI target override while retaining visible effective configuration and testing precedence.
 

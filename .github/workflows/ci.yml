@@ -10,6 +10,24 @@ permissions:
   contents: read
 
 jobs:
+  examples:
+    name: Node ${{ matrix.node }} examples / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Test retry client
+        run: node --test examples/clients/retry.test.mjs
+
   test:
     name: Go ${{ matrix.go }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
