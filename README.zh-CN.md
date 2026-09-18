@@ -6,6 +6,8 @@
 
 [English](README.md) · [下载](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) · [反馈问题](https://github.com/ogrtdtghkhan-afk/faultdeck/issues)
 
+[![CI](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml)
+
 ```text
 你的应用 ──► localhost:7332 ──► 原来的后端
                     ▲
@@ -19,6 +21,8 @@
 - **场景可以进版本库**：导出 JSON，通过命令行或页面重新加载。
 - **自带演示 API**：订单、商品、健康检查和 SSE，无需 API Key 或数据集。
 - **一个可执行文件**：内嵌页面，Go 标准库实现，无需账号、额外服务或前端构建步骤。
+
+![真实演示：注入两次故障后规则完成，下一次请求恢复 200。](docs/assets/fail-twice.png)
 
 ## 三分钟上手
 

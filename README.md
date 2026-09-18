@@ -6,6 +6,8 @@ A local HTTP proxy with a control panel for slow responses, errors, timeouts, an
 
 [中文文档](README.zh-CN.md) · [Download](https://github.com/ogrtdtghkhan-afk/faultdeck/releases/latest) · [Report an issue](https://github.com/ogrtdtghkhan-afk/faultdeck/issues)
 
+[![CI](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml/badge.svg)](https://github.com/ogrtdtghkhan-afk/faultdeck/actions/workflows/ci.yml)
+
 ```text
 Your app ──► localhost:7332 ──► Your backend
                    ▲
@@ -19,6 +21,8 @@ Your app ──► localhost:7332 ──► Your backend
 - **Keep scenarios in your repo.** Export JSON and replay it with the CLI or control panel.
 - **Try it immediately.** An included demo API provides orders, products, health, and an SSE stream. No API keys or datasets.
 - **One executable.** Embedded UI, Go standard library, no runtime services, account, or frontend build step.
+
+![FaultDeck after two injected failures: the rule is complete and the next request returns 200.](docs/assets/fail-twice.png)
 
 ## Try it in three minutes
 
@@ -153,6 +157,8 @@ go build ./cmd/faultdeck
 On a machine with a supported C compiler, also run `go test -race ./...`. The repository includes CI for Go 1.24 and stable on Linux, Windows, and macOS, plus a Linux race check. Tagged releases build archives for `amd64` and `arm64` on each platform with SHA-256 checksums.
 
 Bug reports with a small reproduction, practical fault scenarios, and documentation improvements are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+See the [roadmap](docs/roadmap.md) for current scope and candidate improvements.
 
 ## License
 
